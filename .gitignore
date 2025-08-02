@@ -44,6 +44,8 @@ venv.bak/
 .coverage
 htmlcov/
 
+# data
+data/
 # Node.js
 node_modules/
 npm-debug.log*
