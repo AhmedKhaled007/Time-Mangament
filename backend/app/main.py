@@ -1,15 +1,11 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import json
-import asyncio
-from typing import List
 import os
 from pathlib import Path
 import logging
 from app.api.v1.api import api_router
 from app.core.config import settings
-from app.core.websocket import ConnectionManager
 
 
 logger = logging.getLogger('app')
@@ -39,29 +35,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# WebSocket connection manager
-manager = ConnectionManager()
-
 # Include API routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            # Keep connection alive and listen for messages
-            data = await websocket.receive_text()
-            message = json.loads(data)
-
-            # Broadcast updates to all connected clients
-            await manager.broadcast(json.dumps({
-                "type": message.get("type", "update"),
-                "data": message.get("data", {})
-            }))
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
 
 
 @app.get("/")
@@ -69,8 +44,7 @@ async def root():
     return {
         "message": "Time Management Dashboard API",
         "version": "1.0.0",
-        "docs": "/docs",
-        "websocket": "/ws"
+        "docs": "/docs"
     }
 
 

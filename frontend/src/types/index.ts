@@ -126,11 +126,6 @@ export interface SyncResult {
   imported_count?: number;
 }
 
-// WebSocket Types
-export interface WebSocketMessage {
-  type: 'task_update' | 'timer_update' | 'sync_update' | 'notification';
-  data: any;
-}
 
 // UI Types
 export type TabType = 'daily' | 'weekly';
