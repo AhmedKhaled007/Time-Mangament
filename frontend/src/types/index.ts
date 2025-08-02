@@ -127,6 +127,26 @@ export interface SyncResult {
 }
 
 
+// TickTick Types
+export interface TickTickSettings {
+  enabled: boolean;
+  access_token: string | null;
+  default_project_id: string | null;
+  username: string | null;
+}
+
+export interface TickTickProject {
+  id: string;
+  name: string;
+}
+
+export interface TickTickSyncResult {
+  imported: number;
+  exported: number;
+  errors: string[];
+  success: boolean;
+}
+
 // UI Types
 export type TabType = 'daily' | 'weekly';
 

@@ -20,20 +20,6 @@ class Settings(BaseSettings):
     OBSIDIAN_VAULT_PATH: Optional[str] = None
     AUTO_SYNC_ENABLED: bool = False
 
-    # TickTick integration
-    TICKTICK_USERNAME: Optional[str] = None
-    TICKTICK_PASSWORD: Optional[str] = None
-    TICKTICK_ENABLED: bool = True
-
-    # TickTick OAuth2 settings
-    TICKTICK_CLIENT_ID: Optional[str] = None
-    TICKTICK_CLIENT_SECRET: Optional[str] = None
-    TICKTICK_REDIRECT_URI: Optional[str] = None
-    TICKTICK_ACCESS_TOKEN: Optional[str] = "tp_931ece844c144b4eb66cfcf2ecf154b6"
-    TICKTICK_REFRESH_TOKEN: Optional[str] = None
-
-    # WebSocket settings
-    WS_HEARTBEAT_INTERVAL: int = 30
 
     class Config:
         case_sensitive = True

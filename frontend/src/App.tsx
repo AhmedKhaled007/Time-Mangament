@@ -7,6 +7,7 @@ import TaskManager from './components/TaskManager';
 import DistractionTracker from './components/DistractionTracker';
 import StatsCard from './components/StatsCard';
 import WeeklyPlanner from './components/WeeklyPlanner';
+import TickTickSettings from './components/TickTickSettings';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useTimer } from './hooks/useTimer';
 import { tasksApi, distractionsApi, weeklyTasksApi } from './services/api';
@@ -282,6 +283,19 @@ function App() {
             dailyTasks={tasks}
             focusSessions={focusSessions}
           />
+        )}
+        
+        {/* Settings Tab Content */}
+        {activeTab === 'settings' && (
+          <div className="p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <TickTickSettings />
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <h2 className="text-xl font-semibold mb-4">Other Settings</h2>
+                <p className="text-gray-600">More settings coming soon...</p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
       

@@ -8,7 +8,8 @@ interface TabsProps {
 const Tabs: React.FC<TabsProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'daily', label: '📅 Daily Focus' },
-    { id: 'weekly', label: '🗓️ Weekly Planner' }
+    { id: 'weekly', label: '🗓️ Weekly Planner' },
+    { id: 'settings', label: '⚙️ Settings' }
   ];
 
   return (
