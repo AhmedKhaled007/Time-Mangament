@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Task, WeeklyTask } from '../types';
+import type { WeeklyTask } from '../types';
 import { obsidianApi } from '../services/api';
 
 interface ObsidianControlsProps {
@@ -7,21 +7,15 @@ interface ObsidianControlsProps {
   onPathChange: (path: string) => void;
   autoSyncEnabled: boolean;
   onAutoSyncToggle: (enabled: boolean) => void;
-  weeklyTasks: WeeklyTask[];
-  currentWeekStart: Date;
-  dailyTasks?: Task[];
-  focusSessions?: number;
+  weeklyTasks?: WeeklyTask[];
+  currentWeekStart?: Date;
 }
 
 const ObsidianControls: React.FC<ObsidianControlsProps> = ({
   obsidianPath,
   onPathChange,
   autoSyncEnabled,
-  onAutoSyncToggle,
-  weeklyTasks,
-  currentWeekStart,
-  dailyTasks = [],
-  focusSessions = 0
+  onAutoSyncToggle
 }) => {
   const [status, setStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,8 +28,9 @@ const ObsidianControls: React.FC<ObsidianControlsProps> = ({
         const syncStatus = await obsidianApi.getSyncStatus();
         
         // Use vault_folder_path or fallback to vault_path for backwards compatibility
-        if (syncStatus.vault_folder_path || syncStatus.vault_path) {
-          onPathChange(syncStatus.vault_folder_path || syncStatus.vault_path);
+        const path = syncStatus.vault_folder_path || syncStatus.vault_path;
+        if (path) {
+          onPathChange(path);
         }
         
         if (syncStatus.auto_sync_enabled) {
@@ -77,7 +72,8 @@ const ObsidianControls: React.FC<ObsidianControlsProps> = ({
       }
     } catch (error) {
       console.error('Failed to set Obsidian path:', error);
-      setStatus(`❌ Error: ${error.response?.data?.detail || error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setStatus(`❌ Error: ${message}`);
     } finally {
       setIsLoading(false);
       setTimeout(() => setStatus(''), 5000);
@@ -102,7 +98,8 @@ const ObsidianControls: React.FC<ObsidianControlsProps> = ({
       }
     } catch (error) {
       console.error('Manual sync failed:', error);
-      setStatus(`❌ Sync error: ${error.response?.data?.detail || error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setStatus(`❌ Sync error: ${message}`);
     } finally {
       setIsSyncing(false);
       setTimeout(() => setStatus(''), 5000);

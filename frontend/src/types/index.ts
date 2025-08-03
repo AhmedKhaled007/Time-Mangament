@@ -1,24 +1,4 @@
 // API Types
-export interface Task {
-  id: number;
-  text: string;
-  priority: 'high' | 'medium' | 'low';
-  completed: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TaskCreate {
-  text: string;
-  priority?: 'high' | 'medium' | 'low';
-  completed?: boolean;
-}
-
-export interface TaskUpdate {
-  text?: string;
-  priority?: 'high' | 'medium' | 'low';
-  completed?: boolean;
-}
 
 export interface WeeklyTask {
   id: number;
@@ -28,6 +8,7 @@ export interface WeeklyTask {
   to_time?: string;   // HH:MM format
   date: string;       // YYYY-MM-DD format
   lunch_id?: number;  // References LunchIdea.id
+  breakfast_id?: number;  // References BreakfastIdea.id
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +27,7 @@ export interface WeeklyTaskUpdate {
   from_time?: string;
   to_time?: string;
   lunch_id?: number;
+  breakfast_id?: number;
 }
 
 export interface LunchIdea {
@@ -65,6 +47,25 @@ export interface LunchIdeaUpdate {
 export interface DailyLunch {
   date: string;
   lunch_id?: number;
+}
+
+export interface BreakfastIdea {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
+export interface BreakfastIdeaCreate {
+  name: string;
+}
+
+export interface BreakfastIdeaUpdate {
+  name?: string;
+}
+
+export interface DailyBreakfast {
+  date: string;
+  breakfast_id?: number;
 }
 
 export interface Distraction {
@@ -101,8 +102,6 @@ export interface TimerSettings {
 
 // Stats Types
 export interface TaskStats {
-  total_daily_tasks: number;
-  completed_daily_tasks: number;
   total_weekly_tasks: number;
   completed_weekly_tasks: number;
   total_distractions: number;
@@ -112,9 +111,12 @@ export interface TaskStats {
 // Obsidian Types
 export interface ObsidianSettings {
   vault_path?: string;
+  vault_folder_path?: string;
   auto_sync_enabled: boolean;
   last_sync?: string;
   file_exists: boolean;
+  current_file_name?: string;
+  current_file_path?: string;
 }
 
 export interface SyncResult {
@@ -148,7 +150,7 @@ export interface TickTickSyncResult {
 }
 
 // UI Types
-export type TabType = 'daily' | 'weekly';
+export type TabType = 'pomodoro' | 'weekly' | 'settings';
 
 export interface NotificationData {
   id: string;

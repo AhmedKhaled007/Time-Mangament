@@ -11,11 +11,8 @@ RUN npm ci
 # Copy application source code
 COPY . .
 
-# Build the application
-RUN npm run build
-
 # Expose the port
-EXPOSE 5173
+EXPOSE 5000
 
-# Start the preview server on the correct port
-CMD ["npm", "run", "preview", "--", "--port", "5000", "--host", "0.0.0.0"]
+# Start the development server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5000"]

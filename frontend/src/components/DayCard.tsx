@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { WeeklyTask, LunchIdea } from '../types';
+import type { WeeklyTask, LunchIdea, BreakfastIdea } from '../types';
 import TaskModal from './TaskModal';
 
 interface DayCardProps {
@@ -14,6 +14,9 @@ interface DayCardProps {
   lunchIdeas: LunchIdea[];
   selectedLunchId?: number;
   onLunchChange: (lunchId?: number) => void;
+  breakfastIdeas: BreakfastIdea[];
+  selectedBreakfastId?: number;
+  onBreakfastChange: (breakfastId?: number) => void;
 }
 
 const DayCard: React.FC<DayCardProps> = ({
@@ -27,7 +30,10 @@ const DayCard: React.FC<DayCardProps> = ({
   onEditTask,
   lunchIdeas,
   selectedLunchId,
-  onLunchChange
+  onLunchChange,
+  breakfastIdeas,
+  selectedBreakfastId,
+  onBreakfastChange
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTask, setEditingTask] = useState<WeeklyTask | null>(null);
@@ -85,15 +91,30 @@ const DayCard: React.FC<DayCardProps> = ({
           {dayName} {date.getDate()}
         </div>
         
-        {/* Lunch Selection - moved to top */}
-        <div className="lunch-selection mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            🍽️ Lunch
-          </label>
+        {/* Breakfast Selection */}
+        <div className="breakfast-selection mb-3 flex items-center gap-2">
+          <span className="text-lg">🥐</span>
+          <select
+            value={selectedBreakfastId || ''}
+            onChange={(e) => onBreakfastChange(e.target.value ? parseInt(e.target.value) : undefined)}
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="">No breakfast selected</option>
+            {breakfastIdeas.map((idea) => (
+              <option key={idea.id} value={idea.id}>
+                {idea.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        {/* Lunch Selection */}
+        <div className="lunch-selection mb-4 flex items-center gap-2">
+          <span className="text-lg">🍽️</span>
           <select
             value={selectedLunchId || ''}
             onChange={(e) => onLunchChange(e.target.value ? parseInt(e.target.value) : undefined)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
           >
             <option value="">No lunch selected</option>
             {lunchIdeas.map((idea) => (
@@ -103,6 +124,9 @@ const DayCard: React.FC<DayCardProps> = ({
             ))}
           </select>
         </div>
+
+        {/* Separator line between meals and tasks */}
+        <hr className="border-gray-200 my-4" />
 
         <div className="space-y-3 mb-4 min-h-[60px]">
           {tasks.length > 0 ? (
@@ -219,9 +243,9 @@ const DayCard: React.FC<DayCardProps> = ({
         <TaskModal
           title="Add Task"
           task={null}
-          onSave={(taskData) => {
+          onSave={async (taskData) => {
             setShowAddModal(false);
-            onAddTask(taskData);
+            await onAddTask(taskData);
           }}
           onCancel={() => setShowAddModal(false)}
         />
@@ -232,9 +256,9 @@ const DayCard: React.FC<DayCardProps> = ({
         <TaskModal
           title="Edit Task"
           task={editingTask}
-          onSave={(taskData) => {
+          onSave={async (taskData) => {
             setEditingTask(null);
-            onEditTask(editingTask.id, taskData);
+            await onEditTask(editingTask.id, taskData);
           }}
           onCancel={() => setEditingTask(null)}
         />

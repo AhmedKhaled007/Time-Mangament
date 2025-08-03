@@ -1,18 +1,15 @@
 import React from 'react';
-import type { Task, Distraction } from '../types';
+import type { Distraction } from '../types';
 
 interface StatsCardProps {
   focusSessions: number;
-  tasks: Task[];
   distractions: Distraction[];
 }
 
 const StatsCard: React.FC<StatsCardProps> = ({
   focusSessions,
-  tasks,
   distractions
 }) => {
-  const completedTasks = tasks.filter(task => task.completed).length;
   const distractionCount = distractions.length;
   const productivityScore = Math.max(0, 100 - (distractionCount * 10));
 
@@ -29,7 +26,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
         </div>
         
         <div className="bg-white rounded-lg p-4 text-center">
-          <div className="text-3xl font-bold text-blue-500">{completedTasks}</div>
+          <div className="text-3xl font-bold text-blue-500">-</div>
           <div className="text-sm text-gray-600">Tasks Done</div>
         </div>
         

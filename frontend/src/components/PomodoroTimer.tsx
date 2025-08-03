@@ -35,7 +35,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   };
 
   return (
-    <div className={`card text-center col-span-2 bg-gradient-to-br from-pink-400 to-pink-500 text-white ${
+    <div className={`card text-center bg-gradient-to-br from-pink-400 to-pink-500 text-white ${
       isMinimized ? 'opacity-30 pointer-events-none' : ''
     }`}>
       <h3 className="text-xl font-bold mb-6 border-b-2 border-white border-opacity-30 pb-3">

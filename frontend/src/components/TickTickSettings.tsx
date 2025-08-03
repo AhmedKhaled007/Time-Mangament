@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Key, TestTube, Sync, CheckCircle, XCircle } from 'lucide-react';
+import { Settings, Key, TestTube, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface TickTickSettings {
@@ -34,11 +34,12 @@ const TickTickSettings: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch('/api/v1/settings/ticktick');
+      const baseURL = window.location.port === '5000' ? 'http://127.0.0.1:8000' : '';
+      const response = await fetch(`${baseURL}/api/v1/settings/ticktick`);
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
-        setIsConnected(!!data.access_token);
+        setIsConnected(!!data.access_token && data.access_token !== '***');
         if (data.default_project_id) {
           setSelectedProjectId(data.default_project_id);
         }
@@ -56,7 +57,8 @@ const TickTickSettings: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/v1/ticktick/test-connection', {
+      const baseURL = window.location.port === '5000' ? 'http://127.0.0.1:8000' : '';
+      const response = await fetch(`${baseURL}/api/v1/ticktick/test-connection`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,10 +95,11 @@ const TickTickSettings: React.FC = () => {
   };
 
   const loadProjects = async () => {
-    if (!accessToken.trim()) return;
+    if (!isConnected) return;
 
     try {
-      const response = await fetch(`/api/v1/ticktick/projects?access_token=${encodeURIComponent(accessToken)}`);
+      const baseURL = window.location.port === '5000' ? 'http://127.0.0.1:8000' : '';
+      const response = await fetch(`${baseURL}/api/v1/ticktick/projects`);
       if (response.ok) {
         const data = await response.json();
         setProjects(data.projects || []);
@@ -108,7 +111,8 @@ const TickTickSettings: React.FC = () => {
 
   const updateSettings = async (newSettings: TickTickSettings) => {
     try {
-      const response = await fetch('/api/v1/settings/ticktick', {
+      const baseURL = window.location.port === '5000' ? 'http://127.0.0.1:8000' : '';
+      const response = await fetch(`${baseURL}/api/v1/settings/ticktick`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +151,8 @@ const TickTickSettings: React.FC = () => {
   const handleClearSettings = async () => {
     if (confirm('Are you sure you want to clear all TickTick settings?')) {
       try {
-        const response = await fetch('/api/v1/settings/ticktick', {
+        const baseURL = window.location.port === '5000' ? 'http://127.0.0.1:8000' : '';
+        const response = await fetch(`${baseURL}/api/v1/settings/ticktick`, {
           method: 'DELETE',
         });
 
@@ -180,13 +185,14 @@ const TickTickSettings: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/v1/ticktick/sync', {
+      const baseURL = window.location.port === '5000' ? 'http://127.0.0.1:8000' : '';
+      const response = await fetch(`${baseURL}/api/v1/ticktick/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          access_token: settings.access_token,
+          access_token: accessToken || settings.access_token,
           project_id: selectedProjectId || null,
           sync_direction: direction
         }),
@@ -302,7 +308,7 @@ const TickTickSettings: React.FC = () => {
               disabled={isLoading}
               className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 text-sm"
             >
-              <Sync className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" />
               Import from TickTick
             </button>
             <button
@@ -310,7 +316,7 @@ const TickTickSettings: React.FC = () => {
               disabled={isLoading}
               className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 text-sm"
             >
-              <Sync className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" />
               Export to TickTick
             </button>
             <button
@@ -318,7 +324,7 @@ const TickTickSettings: React.FC = () => {
               disabled={isLoading}
               className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2 text-sm"
             >
-              <Sync className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" />
               Sync Both Ways
             </button>
           </div>

@@ -25,7 +25,7 @@ const DistractionTracker: React.FC<DistractionTrackerProps> = ({
 
   return (
     <div className="card">
-      <h3 className="text-xl font-bold mb-6 text-gray-800 border-b-2 border-blue-500 pb-3">
+      <h3 className="text-xl font-bold mb-6 text-gray-800 border-b-2 border-blue-500 pb-3 text-center">
         🚫 Distraction Buster
       </h3>
       
@@ -37,9 +37,11 @@ const DistractionTracker: React.FC<DistractionTrackerProps> = ({
           placeholder="What distracted you?"
           className="input-field mb-4"
         />
-        <button type="submit" className="btn-primary">
-          Log Distraction
-        </button>
+        <div className="text-center">
+          <button type="submit" className="btn-primary">
+            Log Distraction
+          </button>
+        </div>
       </form>
 
       <div className="max-h-80 overflow-y-auto space-y-2">

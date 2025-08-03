@@ -3,22 +3,20 @@ import Header from './components/Header';
 import Tabs from './components/Tabs';
 import PomodoroTimer from './components/PomodoroTimer';
 import FloatingTimer from './components/FloatingTimer';
-import TaskManager from './components/TaskManager';
 import DistractionTracker from './components/DistractionTracker';
 import StatsCard from './components/StatsCard';
 import WeeklyPlanner from './components/WeeklyPlanner';
-import TickTickSettings from './components/TickTickSettings';
+import Settings from './components/Settings';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useTimer } from './hooks/useTimer';
-import { tasksApi, distractionsApi, weeklyTasksApi } from './services/api';
-import type { Task as ApiTask, Distraction as ApiDistraction, WeeklyTask as ApiWeeklyTask } from './types';
+import { distractionsApi, weeklyTasksApi } from './services/api';
+import type { Distraction as ApiDistraction, WeeklyTask as ApiWeeklyTask } from './types';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('daily');
+  const [activeTab, setActiveTab] = useState('pomodoro');
   const [isTimerMinimized, setIsTimerMinimized] = useState(false);
   
   // State management with API integration
-  const [tasks, setTasks] = useState<ApiTask[]>([]);
   const [distractions, setDistractions] = useState<ApiDistraction[]>([]);
   const [weeklyTasks, setWeeklyTasks] = useState<ApiWeeklyTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,12 +40,10 @@ function App() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [tasksData, distractionsData, weeklyTasksData] = await Promise.all([
-          tasksApi.getTasks(),
+        const [distractionsData, weeklyTasksData] = await Promise.all([
           distractionsApi.getDistractions(),
           weeklyTasksApi.getWeeklyTasks()
         ]);
-        setTasks(tasksData);
         setDistractions(distractionsData);
         setWeeklyTasks(weeklyTasksData);
         setError(null);
@@ -67,55 +63,41 @@ function App() {
     setFocusSessions(prev => prev + 1);
   });
 
+  // Update browser tab title with timer when running
+  useEffect(() => {
+    const formatTime = (seconds: number) => {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    if (timer.isRunning) {
+      document.title = `⏰ ${formatTime(timer.timeLeft)} - ${timer.status} | Time Management`;
+    } else if (isTimerMinimized) {
+      document.title = `⏸️ ${formatTime(timer.timeLeft)} - ${timer.status} | Time Management`;
+    } else {
+      document.title = 'Time Management Dashboard';
+    }
+
+    return () => {
+      // Cleanup: Reset title when component unmounts
+      document.title = 'Time Management Dashboard';
+    };
+  }, [timer.timeLeft, timer.isRunning, timer.status, isTimerMinimized]);
+
   const handleMinimizeTimer = () => {
     setIsTimerMinimized(true);
   };
 
   const handleRestoreTimer = () => {
     setIsTimerMinimized(false);
-    setActiveTab('daily');
+    setActiveTab('pomodoro');
   };
 
   const handleHideFloatingTimer = () => {
     setIsTimerMinimized(false);
   };
 
-  // Task management functions with API integration
-  const addTask = async (taskData: Omit<ApiTask, 'id' | 'created_at' | 'updated_at'>) => {
-    try {
-      const newTask = await tasksApi.createTask({
-        text: taskData.text,
-        priority: taskData.priority,
-        completed: taskData.completed
-      });
-      setTasks(prev => [newTask, ...prev]);
-    } catch (err) {
-      console.error('Failed to create task:', err);
-      setError('Failed to create task');
-    }
-  };
-
-  const toggleTask = async (id: number) => {
-    try {
-      const updatedTask = await tasksApi.toggleTask(id);
-      setTasks(prev => prev.map(task => 
-        task.id === id ? updatedTask : task
-      ));
-    } catch (err) {
-      console.error('Failed to toggle task:', err);
-      setError('Failed to update task');
-    }
-  };
-
-  const deleteTask = async (id: number) => {
-    try {
-      await tasksApi.deleteTask(id);
-      setTasks(prev => prev.filter(task => task.id !== id));
-    } catch (err) {
-      console.error('Failed to delete task:', err);
-      setError('Failed to delete task');
-    }
-  };
 
   // Distraction management functions with API integration
   const addDistraction = async (distractionData: Omit<ApiDistraction, 'id' | 'created_at'>) => {
@@ -232,10 +214,17 @@ function App() {
         )}
         <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
         
-        {/* Daily Tab Content */}
-        {activeTab === 'daily' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
-            <div className="col-span-full">
+        {/* Pomodoro Tab Content */}
+        {activeTab === 'pomodoro' && (
+          <div className="p-8">
+            <div className="mb-8">
+              <DistractionTracker
+                distractions={distractions}
+                onAddDistraction={addDistraction}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <PomodoroTimer
                 timeLeft={timer.timeLeft}
                 isRunning={timer.isRunning}
@@ -246,57 +235,32 @@ function App() {
                 isMinimized={isTimerMinimized}
                 onMinimize={handleMinimizeTimer}
               />
-            </div>
-            
-            <TaskManager
-              tasks={tasks}
-              onAddTask={addTask}
-              onToggleTask={toggleTask}
-              onDeleteTask={deleteTask}
-            />
-            
-            <DistractionTracker
-              distractions={distractions}
-              onAddDistraction={addDistraction}
-            />
-            
-            <div className="col-span-full">
+              
               <StatsCard
                 focusSessions={focusSessions}
-                tasks={tasks}
                 distractions={distractions}
               />
             </div>
           </div>
         )}
-        
+
         {/* Weekly Tab Content */}
         {activeTab === 'weekly' && (
-          <WeeklyPlanner
-            weeklyTasks={weeklyTasks}
-            onAddWeeklyTask={addWeeklyTask}
-            onToggleWeeklyTask={toggleWeeklyTask}
-            onDeleteWeeklyTask={deleteWeeklyTask}
-            onUpdateWeeklyTask={updateWeeklyTask}
-            currentWeekStart={currentWeekStart}
-            onWeekChange={handleWeekChange}
-            dailyTasks={tasks}
-            focusSessions={focusSessions}
-          />
+          <div className="p-8">
+            <WeeklyPlanner
+              weeklyTasks={weeklyTasks}
+              onAddWeeklyTask={addWeeklyTask}
+              onToggleWeeklyTask={toggleWeeklyTask}
+              onDeleteWeeklyTask={deleteWeeklyTask}
+              onUpdateWeeklyTask={updateWeeklyTask}
+              currentWeekStart={currentWeekStart}
+              onWeekChange={handleWeekChange}
+            />
+          </div>
         )}
         
         {/* Settings Tab Content */}
-        {activeTab === 'settings' && (
-          <div className="p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <TickTickSettings />
-              <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h2 className="text-xl font-semibold mb-4">Other Settings</h2>
-                <p className="text-gray-600">More settings coming soon...</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {activeTab === 'settings' && <Settings />}
       </div>
       
       {/* Floating Timer */}

@@ -1,8 +1,5 @@
 import axios from 'axios';
 import type {
-  Task,
-  TaskCreate,
-  TaskUpdate,
   WeeklyTask,
   WeeklyTaskCreate,
   WeeklyTaskUpdate,
@@ -15,9 +12,27 @@ import type {
   LunchIdeaCreate,
   LunchIdeaUpdate,
   DailyLunch,
+  BreakfastIdea,
+  BreakfastIdeaCreate,
+  BreakfastIdeaUpdate,
+  DailyBreakfast,
 } from '../types';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+// Auto-detect API base URL based on environment
+const getApiBaseUrl = () => {
+  // Check if we're in Docker by looking at the hostname/port
+  const isDocker = window.location.port === '5000';
+  
+  if (isDocker) {
+    // In Docker, both frontend and backend are accessible from the host
+    return 'http://127.0.0.1:8000/api/v1';
+  }
+  
+  // For local development with Vite proxy
+  return '/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -41,28 +56,8 @@ api.interceptors.response.use(
   }
 );
 
-// Daily Tasks API
+// Task Statistics API
 export const tasksApi = {
-  // Get all daily tasks
-  getTasks: (): Promise<Task[]> =>
-    api.get('/tasks').then((response) => response.data),
-
-  // Create new daily task
-  createTask: (task: TaskCreate): Promise<Task> =>
-    api.post('/tasks', task).then((response) => response.data),
-
-  // Update daily task
-  updateTask: (id: number, task: TaskUpdate): Promise<Task> =>
-    api.put(`/tasks/${id}`, task).then((response) => response.data),
-
-  // Toggle task completion
-  toggleTask: (id: number): Promise<Task> =>
-    api.post(`/tasks/${id}/toggle`).then((response) => response.data),
-
-  // Delete daily task
-  deleteTask: (id: number): Promise<void> =>
-    api.delete(`/tasks/${id}`).then(() => undefined),
-
   // Get task statistics
   getStats: (): Promise<TaskStats> =>
     api.get('/tasks/stats').then((response) => response.data),
@@ -158,8 +153,35 @@ export const lunchIdeasApi = {
     api.put(`/tasks/weekly/${date}/lunch`, { lunch_id: lunchId }).then((response) => response.data),
 };
 
+// Breakfast Ideas API
+export const breakfastIdeasApi = {
+  // Get all breakfast ideas
+  getBreakfastIdeas: (): Promise<BreakfastIdea[]> =>
+    api.get('/tasks/breakfast-ideas').then((response) => response.data),
+
+  // Create new breakfast idea
+  createBreakfastIdea: (breakfastIdea: BreakfastIdeaCreate): Promise<BreakfastIdea> =>
+    api.post('/tasks/breakfast-ideas', breakfastIdea).then((response) => response.data),
+
+  // Update breakfast idea
+  updateBreakfastIdea: (id: number, breakfastIdea: BreakfastIdeaUpdate): Promise<BreakfastIdea> =>
+    api.put(`/tasks/breakfast-ideas/${id}`, breakfastIdea).then((response) => response.data),
+
+  // Delete breakfast idea
+  deleteBreakfastIdea: (id: number): Promise<void> =>
+    api.delete(`/tasks/breakfast-ideas/${id}`).then(() => undefined),
+
+  // Get daily breakfast selection
+  getDailyBreakfast: (date: string): Promise<DailyBreakfast> =>
+    api.get(`/tasks/weekly/${date}/breakfast`).then((response) => response.data),
+
+  // Update daily breakfast selection
+  updateDailyBreakfast: (date: string, breakfastId?: number): Promise<{ message: string; date: string; breakfast_id?: number }> =>
+    api.put(`/tasks/weekly/${date}/breakfast`, { breakfast_id: breakfastId }).then((response) => response.data),
+};
+
 // Health check
 export const healthCheck = (): Promise<{ status: string; message: string }> =>
-  api.get('/health', { baseURL: 'http://localhost:8000' }).then((response) => response.data);
+  api.get('/health', { baseURL: 'http://127.0.0.1:8000' }).then((response) => response.data);
 
 export default api;
