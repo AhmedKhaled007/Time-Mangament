@@ -1,34 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
-from enum import Enum
 
-class TaskPriority(str, Enum):
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
-class TaskBase(BaseModel):
-    text: str = Field(..., min_length=1, max_length=500)
-    priority: TaskPriority = TaskPriority.MEDIUM
-    completed: bool = False
-
-class TaskCreate(TaskBase):
-    pass
-
-class TaskUpdate(BaseModel):
-    text: Optional[str] = None
-    priority: Optional[TaskPriority] = None
-    completed: Optional[bool] = None
-
-class Task(TaskBase):
-    id: int
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-    ticktick_id: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 class WeeklyTaskBase(BaseModel):
     text: str = Field(..., min_length=1, max_length=500)

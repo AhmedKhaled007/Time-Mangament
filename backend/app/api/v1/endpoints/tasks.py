@@ -2,32 +2,14 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import List, Optional
 import json
 
-from app.models.task import Task, TaskCreate, TaskUpdate, WeeklyTask, WeeklyTaskCreate, WeeklyTaskUpdate, Distraction, DistractionCreate, LunchIdea, LunchIdeaCreate, LunchIdeaUpdate, DailyLunchUpdate
+from app.models.task import WeeklyTask, WeeklyTaskCreate, WeeklyTaskUpdate, Distraction, DistractionCreate, LunchIdea, LunchIdeaCreate, LunchIdeaUpdate, DailyLunchUpdate
 from app.services.task_service import task_service
 from app.services.obsidian_service import obsidian_service
-
+import logging
+logger = logging.getLogger("app")
 router = APIRouter()
 
-# Daily Tasks
-
-
-@router.get("/", response_model=List[Task])
-async def get_tasks():
-    """Get all daily tasks"""
-    return await task_service.get_tasks()
-
-
-@router.post("/", response_model=Task)
-async def create_task(task: TaskCreate, background_tasks: BackgroundTasks):
-    """Create a new daily task"""
-    new_task = await task_service.create_task(task)
-
-    # Auto-sync to Obsidian in background
-    background_tasks.add_task(obsidian_service.auto_sync_if_enabled)
-
-    return new_task
-
-# Lunch Ideas (must come before /{task_id} routes to avoid path conflicts)
+# Lunch Ideas
 
 
 @router.get("/lunch-ideas", response_model=List[LunchIdea])
@@ -64,47 +46,6 @@ async def delete_lunch_idea(lunch_id: int):
     return {"message": "Lunch idea deleted successfully"}
 
 
-@router.put("/{task_id}", response_model=Task)
-async def update_task(task_id: int, task_update: TaskUpdate, background_tasks: BackgroundTasks):
-    """Update a daily task"""
-    updated_task = await task_service.update_task(task_id, task_update)
-
-    if not updated_task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    # Auto-sync to Obsidian in background
-    background_tasks.add_task(obsidian_service.auto_sync_if_enabled)
-
-    return updated_task
-
-
-@router.post("/{task_id}/toggle", response_model=Task)
-async def toggle_task(task_id: int, background_tasks: BackgroundTasks):
-    """Toggle task completion status"""
-    updated_task = await task_service.toggle_task(task_id)
-
-    if not updated_task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    # Auto-sync to Obsidian in background
-    background_tasks.add_task(obsidian_service.auto_sync_if_enabled)
-
-    return updated_task
-
-
-@router.delete("/{task_id}")
-async def delete_task(task_id: int, background_tasks: BackgroundTasks):
-    """Delete a daily task"""
-    success = await task_service.delete_task(task_id)
-
-    if not success:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    # Auto-sync to Obsidian in background
-    background_tasks.add_task(obsidian_service.auto_sync_if_enabled)
-
-    return {"message": "Task deleted successfully"}
-
 # Weekly Tasks
 
 
@@ -117,7 +58,13 @@ async def get_weekly_tasks(date: Optional[str] = None):
 @router.post("/weekly", response_model=WeeklyTask)
 async def create_weekly_task(task: WeeklyTaskCreate, background_tasks: BackgroundTasks):
     """Create a new weekly task"""
+
+    logger.info(f"[API] ===== CREATING WEEKLY TASK API ENDPOINT: {task.text} =====")
+
     new_task = await task_service.create_weekly_task(task)
+
+    logger.info(f"[API] Task service returned: {new_task}")
+    logger.info(f"[API] Task has ticktick_id: {getattr(new_task, 'ticktick_id', 'NO ATTR')}")
 
     # Auto-sync to Obsidian in background
     background_tasks.add_task(obsidian_service.auto_sync_if_enabled)

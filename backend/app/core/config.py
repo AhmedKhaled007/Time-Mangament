@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Time Management Dashboard"
 
     # CORS settings
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:5173"]
+    BACKEND_CORS_ORIGINS: list = ["http://127.0.0.1:5000", "http://127.0.0.1:5173",
+                                  "http://127.0.0.1:3000", "http://localhost:5000", "http://localhost:5173", "http://localhost:3000"]
 
     # File storage paths
     DATA_DIR: str = "data"
@@ -20,6 +21,9 @@ class Settings(BaseSettings):
     OBSIDIAN_VAULT_PATH: Optional[str] = None
     AUTO_SYNC_ENABLED: bool = False
 
+    # TickTick integration
+    TICKTICK_ENABLED: bool = False
+    TICKTICK_ACCESS_TOKEN: Optional[str] = None
 
     class Config:
         case_sensitive = True

@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pathlib import Path
 
-from app.models.task import Task, TaskCreate, TaskUpdate, WeeklyTask, WeeklyTaskCreate, WeeklyTaskUpdate, Distraction, DistractionCreate, LunchIdea, LunchIdeaCreate, LunchIdeaUpdate
+from app.models.task import WeeklyTask, WeeklyTaskCreate, WeeklyTaskUpdate, Distraction, DistractionCreate, LunchIdea, LunchIdeaCreate, LunchIdeaUpdate
 from app.core.config import settings
 from app.services.ticktick_service import ticktick_service
 import logging
@@ -14,6 +14,7 @@ logger = logging.getLogger("app")
 
 class TaskService:
     def __init__(self):
+        logger.info("[TaskService] INITIALIZING TASK SERVICE")
         self.tasks_file = Path(settings.TASKS_FILE)
         self.weekly_tasks_file = Path(settings.WEEKLY_TASKS_FILE)
         self.lunch_ideas_file = Path("data/lunch_ideas.json")
@@ -54,104 +55,6 @@ class TaskService:
         async with aiofiles.open(file_path, 'w') as f:
             await f.write(json.dumps(data, indent=2, default=str))
 
-    # Daily Tasks
-    async def get_tasks(self) -> List[Task]:
-        """Get all daily tasks"""
-        data = await self._load_data(self.tasks_file)
-        return [Task(**task) for task in data.get("tasks", [])]
-
-    async def create_task(self, task_data: TaskCreate) -> Task:
-        """Create a new daily task"""
-        data = await self._load_data(self.tasks_file)
-
-        task = Task(
-            id=data["next_id"],
-            **task_data.dict(),
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-
-        data["tasks"].insert(0, task.dict())  # Add to beginning
-        data["next_id"] += 1
-
-        await self._save_data(self.tasks_file, data)
-
-        # Create task in TickTick if integration is enabled
-        ticktick_result = await ticktick_service.create_task(task)
-        if ticktick_result and ticktick_result.get("status") == "success":
-            # Store TickTick ID and project ID with the task for future updates
-            for i, stored_task in enumerate(data["tasks"]):
-                if stored_task["id"] == task.id:
-                    data["tasks"][i]["ticktick_id"] = ticktick_result.get("ticktick_id")
-                    data["tasks"][i]["project_id"] = ticktick_result.get("project_id")
-                    await self._save_data(self.tasks_file, data)
-                    break
-
-        return task
-
-    async def update_task(self, task_id: int, task_update: TaskUpdate) -> Optional[Task]:
-        """Update a daily task"""
-        data = await self._load_data(self.tasks_file)
-
-        for i, task in enumerate(data["tasks"]):
-            if task["id"] == task_id:
-                # Get the old task data before update for TickTick sync
-                old_task = Task(**data["tasks"][i])
-
-                # Update only provided fields
-                update_data = task_update.dict(exclude_unset=True)
-                update_data["updated_at"] = datetime.now()
-
-                data["tasks"][i].update(update_data)
-                updated_task = Task(**data["tasks"][i])
-
-                # Sync with TickTick if task has TickTick ID
-                ticktick_id = task.get("ticktick_id")
-                if ticktick_id:
-                    await ticktick_service.update_daily_task(ticktick_id, old_task, updated_task)
-
-                await self._save_data(self.tasks_file, data)
-                return updated_task
-
-        return None
-
-    async def delete_task(self, task_id: int) -> bool:
-        """Delete a daily task"""
-        data = await self._load_data(self.tasks_file)
-
-        for i, task in enumerate(data["tasks"]):
-            if task["id"] == task_id:
-                # Delete from TickTick if task has TickTick ID
-                ticktick_id = task.get("ticktick_id")
-                project_id = task.get("project_id")
-                if ticktick_id and project_id:
-                    await ticktick_service.delete_task(ticktick_id, project_id)
-
-                data["tasks"].pop(i)
-                await self._save_data(self.tasks_file, data)
-                return True
-
-        return False
-
-    async def toggle_task(self, task_id: int) -> Optional[Task]:
-        """Toggle task completion status"""
-        data = await self._load_data(self.tasks_file)
-
-        for i, task in enumerate(data["tasks"]):
-            if task["id"] == task_id:
-                new_completed = not data["tasks"][i]["completed"]
-                data["tasks"][i]["completed"] = new_completed
-                data["tasks"][i]["updated_at"] = datetime.now()
-
-                # Sync with TickTick if task has TickTick ID
-                ticktick_id = task.get("ticktick_id")
-                if ticktick_id:
-                    await ticktick_service.update_task_completion(ticktick_id, new_completed)
-
-                await self._save_data(self.tasks_file, data)
-                return Task(**data["tasks"][i])
-
-        return None
 
     # Weekly Tasks
     async def get_weekly_tasks(self, date: Optional[str] = None) -> List[WeeklyTask]:
@@ -166,6 +69,7 @@ class TaskService:
 
     async def create_weekly_task(self, task_data: WeeklyTaskCreate) -> WeeklyTask:
         """Create a new weekly task"""
+        logger.info(f"[TaskService] ===== CREATING WEEKLY TASK: {task_data.text} =====")
         data = await self._load_data(self.weekly_tasks_file)
 
         task = WeeklyTask(
@@ -190,7 +94,8 @@ class TaskService:
                     if ticktick_result.get("ticktick_data"):
                         data["tasks"][i]["project_id"] = ticktick_result["ticktick_data"].get("projectId")
                     await self._save_data(self.weekly_tasks_file, data)
-                    break
+                    # Return updated task object with TickTick ID
+                    return WeeklyTask(**data["tasks"][i])
 
         return task
 
@@ -203,16 +108,13 @@ class TaskService:
                 update_data = task_update.dict(exclude_unset=True)
                 update_data["updated_at"] = datetime.now()
 
-                # Get the old task data before update for TickTick sync
-                old_task = WeeklyTask(**data["tasks"][i])
-
                 data["tasks"][i].update(update_data)
                 updated_task = WeeklyTask(**data["tasks"][i])
 
                 # Sync with TickTick if task has TickTick ID
                 ticktick_id = task.get("ticktick_id")
                 if ticktick_id:
-                    await ticktick_service.update_weekly_task(ticktick_id, old_task, updated_task)
+                    await ticktick_service.update_weekly_task(ticktick_id, updated_task)
 
                 await self._save_data(self.weekly_tasks_file, data)
                 return updated_task
@@ -249,8 +151,9 @@ class TaskService:
 
                 # Sync with TickTick if task has TickTick ID
                 ticktick_id = task.get("ticktick_id")
+                project_id = task.get("project_id")
                 if ticktick_id:
-                    await ticktick_service.update_task_completion(ticktick_id, new_completed)
+                    await ticktick_service.update_task_completion(ticktick_id, new_completed, project_id)
 
                 await self._save_data(self.weekly_tasks_file, data)
                 return WeeklyTask(**data["tasks"][i])
@@ -285,16 +188,12 @@ class TaskService:
         daily_data = await self._load_data(self.tasks_file)
         weekly_data = await self._load_data(self.weekly_tasks_file)
 
-        daily_tasks = daily_data.get("tasks", [])
         weekly_tasks = weekly_data.get("tasks", [])
         distractions = daily_data.get("distractions", [])
 
-        completed_daily = len([t for t in daily_tasks if t.get("completed", False)])
         completed_weekly = len([t for t in weekly_tasks if t.get("completed", False)])
 
         return {
-            "total_daily_tasks": len(daily_tasks),
-            "completed_daily_tasks": completed_daily,
             "total_weekly_tasks": len(weekly_tasks),
             "completed_weekly_tasks": completed_weekly,
             "total_distractions": len(distractions),
