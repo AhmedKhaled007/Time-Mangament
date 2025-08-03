@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import List, Optional
 import json
 
-from app.models.task import WeeklyTask, WeeklyTaskCreate, WeeklyTaskUpdate, Distraction, DistractionCreate, LunchIdea, LunchIdeaCreate, LunchIdeaUpdate, DailyLunchUpdate
+from app.models.task import WeeklyTask, WeeklyTaskCreate, WeeklyTaskUpdate, Distraction, DistractionCreate, LunchIdea, LunchIdeaCreate, LunchIdeaUpdate, DailyLunchUpdate, BreakfastIdea, BreakfastIdeaCreate, BreakfastIdeaUpdate, DailyBreakfastUpdate
 from app.services.task_service import task_service
 from app.services.obsidian_service import obsidian_service
 import logging
@@ -44,6 +44,42 @@ async def delete_lunch_idea(lunch_id: int):
         raise HTTPException(status_code=404, detail="Lunch idea not found")
 
     return {"message": "Lunch idea deleted successfully"}
+
+
+# Breakfast Ideas
+
+@router.get("/breakfast-ideas", response_model=List[BreakfastIdea])
+async def get_breakfast_ideas():
+    """Get all breakfast ideas"""
+    return await task_service.get_breakfast_ideas()
+
+
+@router.post("/breakfast-ideas", response_model=BreakfastIdea)
+async def create_breakfast_idea(breakfast_idea: BreakfastIdeaCreate):
+    """Create a new breakfast idea"""
+    return await task_service.create_breakfast_idea(breakfast_idea)
+
+
+@router.put("/breakfast-ideas/{breakfast_id}", response_model=BreakfastIdea)
+async def update_breakfast_idea(breakfast_id: int, breakfast_update: BreakfastIdeaUpdate):
+    """Update a breakfast idea"""
+    updated_breakfast = await task_service.update_breakfast_idea(breakfast_id, breakfast_update)
+
+    if not updated_breakfast:
+        raise HTTPException(status_code=404, detail="Breakfast idea not found")
+
+    return updated_breakfast
+
+
+@router.delete("/breakfast-ideas/{breakfast_id}")
+async def delete_breakfast_idea(breakfast_id: int):
+    """Delete a breakfast idea"""
+    success = await task_service.delete_breakfast_idea(breakfast_id)
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Breakfast idea not found")
+
+    return {"message": "Breakfast idea deleted successfully"}
 
 
 # Weekly Tasks
@@ -134,6 +170,27 @@ async def update_daily_lunch(date: str, lunch_update: DailyLunchUpdate, backgrou
     background_tasks.add_task(obsidian_service.auto_sync_if_enabled)
 
     return {"message": "Daily lunch updated successfully", "date": date, "lunch_id": lunch_update.lunch_id}
+
+# Daily Breakfast
+@router.get("/weekly/{date}/breakfast")
+async def get_daily_breakfast(date: str):
+    """Get the breakfast selection for a specific date"""
+    breakfast_id = await task_service.get_daily_breakfast(date)
+    return {"date": date, "breakfast_id": breakfast_id}
+
+
+@router.put("/weekly/{date}/breakfast")
+async def update_daily_breakfast(date: str, breakfast_update: DailyBreakfastUpdate, background_tasks: BackgroundTasks):
+    """Update the breakfast selection for a specific date"""
+    success = await task_service.update_daily_breakfast(date, breakfast_update.breakfast_id)
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Unable to update breakfast for this date")
+
+    # Auto-sync to Obsidian in background
+    background_tasks.add_task(obsidian_service.auto_sync_if_enabled)
+
+    return {"message": "Daily breakfast updated successfully", "date": date, "breakfast_id": breakfast_update.breakfast_id}
 
 # Distractions
 

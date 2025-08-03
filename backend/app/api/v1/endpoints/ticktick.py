@@ -33,21 +33,21 @@ async def test_ticktick_connection(request: TickTickTestRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects")
-async def get_ticktick_projects(access_token: str):
+async def get_ticktick_projects():
     """Get all projects from TickTick"""
     try:
-        projects = await ticktick_service.get_projects(access_token)
+        projects = await ticktick_service.get_projects()
         return {"projects": projects}
     except Exception as e:
         logger.error(f"Error fetching TickTick projects: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/tasks")
-async def get_ticktick_tasks(access_token: str, project_id: Optional[str] = None):
+async def get_ticktick_tasks(project_id: Optional[str] = None):
     """Get tasks from TickTick, optionally filtered by project"""
     try:
-        tasks = await ticktick_service.get_tasks(access_token, project_id)
-        return {"tasks": tasks}
+        tasks = await ticktick_service.get_tasks(project_id=project_id)
+        return tasks if tasks else {"tasks": []}
     except Exception as e:
         logger.error(f"Error fetching TickTick tasks: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -66,10 +66,10 @@ async def sync_with_ticktick(request: TickTickSyncRequest):
         # Import from TickTick to local
         if request.sync_direction in ["import", "both"]:
             try:
-                ticktick_tasks = await ticktick_service.get_tasks(
-                    request.access_token, 
-                    request.project_id
+                ticktick_response = await ticktick_service.get_tasks(
+                    project_id=request.project_id
                 )
+                ticktick_tasks = ticktick_response.get("tasks", []) if ticktick_response else []
                 
                 for tt_task in ticktick_tasks:
                     try:
@@ -90,14 +90,7 @@ async def sync_with_ticktick(request: TickTickSyncRequest):
                 
                 for task in local_tasks:
                     try:
-                        tt_task_data = ticktick_service.convert_local_to_ticktick_task(
-                            task, 
-                            request.project_id
-                        )
-                        created_tt_task = await ticktick_service.create_task(
-                            request.access_token, 
-                            tt_task_data
-                        )
+                        created_tt_task = await ticktick_service.create_task(task)
                         if created_tt_task:
                             result["exported"] += 1
                     except Exception as e:

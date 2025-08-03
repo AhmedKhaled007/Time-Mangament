@@ -4,8 +4,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pathlib import Path
 
-from app.models.task import WeeklyTask, WeeklyTaskCreate, WeeklyTaskUpdate, Distraction, DistractionCreate, LunchIdea, LunchIdeaCreate, LunchIdeaUpdate
-from app.core.config import settings
+from app.models.task import WeeklyTask, WeeklyTaskCreate, WeeklyTaskUpdate, Distraction, DistractionCreate, LunchIdea, LunchIdeaCreate, LunchIdeaUpdate, BreakfastIdea, BreakfastIdeaCreate, BreakfastIdeaUpdate
+from app.utlis.config import settings
 from app.services.ticktick_service import ticktick_service
 import logging
 
@@ -19,6 +19,8 @@ class TaskService:
         self.weekly_tasks_file = Path(settings.WEEKLY_TASKS_FILE)
         self.lunch_ideas_file = Path("data/lunch_ideas.json")
         self.daily_lunches_file = Path("data/daily_lunches.json")
+        self.breakfast_ideas_file = Path("data/breakfast_ideas.json")
+        self.daily_breakfasts_file = Path("data/daily_breakfasts.json")
         self._ensure_files_exist()
 
     def _ensure_files_exist(self):
@@ -41,6 +43,18 @@ class TaskService:
             with open(self.daily_lunches_file, 'w') as f:
                 json.dump({"daily_lunches": {}}, f)
 
+        # Ensure breakfast ideas file exists
+        if not self.breakfast_ideas_file.exists():
+            self.breakfast_ideas_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.breakfast_ideas_file, 'w') as f:
+                json.dump({"breakfast_ideas": [], "next_id": 1}, f)
+
+        # Ensure daily breakfasts file exists
+        if not self.daily_breakfasts_file.exists():
+            self.daily_breakfasts_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.daily_breakfasts_file, 'w') as f:
+                json.dump({"daily_breakfasts": {}}, f)
+
     async def _load_data(self, file_path: Path) -> Dict[str, Any]:
         """Load data from JSON file"""
         try:
@@ -55,8 +69,8 @@ class TaskService:
         async with aiofiles.open(file_path, 'w') as f:
             await f.write(json.dumps(data, indent=2, default=str))
 
-
     # Weekly Tasks
+
     async def get_weekly_tasks(self, date: Optional[str] = None) -> List[WeeklyTask]:
         """Get weekly tasks, optionally filtered by date"""
         data = await self._load_data(self.weekly_tasks_file)
@@ -270,6 +284,78 @@ class TaskService:
             data["daily_lunches"][date] = lunch_id
 
         await self._save_data(self.daily_lunches_file, data)
+        return True
+
+    # Breakfast Ideas
+    async def get_breakfast_ideas(self) -> List[BreakfastIdea]:
+        """Get all breakfast ideas"""
+        data = await self._load_data(self.breakfast_ideas_file)
+        return [BreakfastIdea(**idea) for idea in data.get("breakfast_ideas", [])]
+
+    async def create_breakfast_idea(self, breakfast_data: BreakfastIdeaCreate) -> BreakfastIdea:
+        """Create a new breakfast idea"""
+        data = await self._load_data(self.breakfast_ideas_file)
+
+        breakfast_idea = BreakfastIdea(
+            id=data["next_id"],
+            **breakfast_data.dict(),
+            created_at=datetime.now()
+        )
+
+        data["breakfast_ideas"].append(breakfast_idea.dict())
+        data["next_id"] += 1
+
+        await self._save_data(self.breakfast_ideas_file, data)
+        return breakfast_idea
+
+    async def update_breakfast_idea(self, breakfast_id: int, breakfast_update: BreakfastIdeaUpdate) -> Optional[BreakfastIdea]:
+        """Update a breakfast idea"""
+        data = await self._load_data(self.breakfast_ideas_file)
+
+        for i, idea in enumerate(data["breakfast_ideas"]):
+            if idea["id"] == breakfast_id:
+                update_data = breakfast_update.dict(exclude_unset=True)
+                data["breakfast_ideas"][i].update(update_data)
+                updated_idea = BreakfastIdea(**data["breakfast_ideas"][i])
+
+                await self._save_data(self.breakfast_ideas_file, data)
+                return updated_idea
+
+        return None
+
+    async def delete_breakfast_idea(self, breakfast_id: int) -> bool:
+        """Delete a breakfast idea"""
+        data = await self._load_data(self.breakfast_ideas_file)
+
+        for i, idea in enumerate(data["breakfast_ideas"]):
+            if idea["id"] == breakfast_id:
+                data["breakfast_ideas"].pop(i)
+                await self._save_data(self.breakfast_ideas_file, data)
+                return True
+
+        return False
+
+    # Daily Breakfast Management
+    async def get_daily_breakfast(self, date: str) -> Optional[int]:
+        """Get the breakfast selection for a specific date"""
+        data = await self._load_data(self.daily_breakfasts_file)
+        return data.get("daily_breakfasts", {}).get(date)
+
+    async def update_daily_breakfast(self, date: str, breakfast_id: Optional[int]) -> bool:
+        """Update the breakfast selection for a specific date"""
+        data = await self._load_data(self.daily_breakfasts_file)
+
+        if "daily_breakfasts" not in data:
+            data["daily_breakfasts"] = {}
+
+        if breakfast_id is None:
+            # Remove breakfast selection for this date
+            data["daily_breakfasts"].pop(date, None)
+        else:
+            # Set breakfast selection for this date
+            data["daily_breakfasts"][date] = breakfast_id
+
+        await self._save_data(self.daily_breakfasts_file, data)
         return True
 
 

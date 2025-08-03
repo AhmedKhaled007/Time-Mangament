@@ -3,8 +3,9 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 import requests
 from zoneinfo import ZoneInfo
+import json
+import os
 
-from app.core.config import settings
 from app.models.task import WeeklyTask
 
 logger = logging.getLogger("app")
@@ -16,17 +17,32 @@ class TickTickService:
     def __init__(self):
         self.base_url = "https://api.ticktick.com/open/v1"
         self.session = requests.Session()
-        self.session.timeout = 30
+        self.settings_file_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'app_settings.json')
+
+    def _load_app_settings(self) -> Dict[str, Any]:
+        """Load application settings from app_settings.json file."""
+        try:
+            if os.path.exists(self.settings_file_path):
+                with open(self.settings_file_path, 'r') as f:
+                    return json.load(f)
+            else:
+                logger.warning(f"Settings file not found at {self.settings_file_path}")
+                return {}
+        except Exception as e:
+            logger.error(f"Failed to load app settings: {str(e)}")
+            return {}
 
     def _is_enabled(self) -> bool:
         """Check if TickTick integration is enabled."""
-        return getattr(settings, 'TICKTICK_ENABLED', False)
+        settings_data = self._load_app_settings()
+        return settings_data.get('ticktick', {}).get('enabled', False)
 
     def _get_access_token(self) -> Optional[str]:
-        """Get TickTick access token from settings."""
+        """Get TickTick access token from app_settings.json."""
         if not self._is_enabled():
             return None
-        return getattr(settings, 'TICKTICK_ACCESS_TOKEN', None)
+        settings_data = self._load_app_settings()
+        return settings_data.get('ticktick', {}).get('access_token')
 
     def _get_priority_mapping(self, local_priority: str) -> int:
         """Map local priority to TickTick priority values."""
@@ -40,14 +56,14 @@ class TickTickService:
     def _parse_task_datetime(self, date_str: str, time_str: Optional[str] = None) -> datetime:
         """Parse date and time strings into a datetime object with Egypt timezone."""
         egypt_tz = ZoneInfo("Africa/Cairo")
-        
+
         if time_str:
             datetime_str = f"{date_str} {time_str}"
             dt = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
         else:
             dt = datetime.strptime(date_str, "%Y-%m-%d")
             dt = dt.replace(hour=9)  # Default to 9 AM if no time specified
-        
+
         return dt.replace(tzinfo=egypt_tz)
 
     def _format_datetime_for_ticktick(self, dt: datetime) -> str:
@@ -74,7 +90,7 @@ class TickTickService:
     async def get_projects(self) -> Optional[List[Dict[str, Any]]]:
         """Get all projects from TickTick."""
         logger.debug("[TickTick] Fetching all projects")
-        
+
         access_token = self._get_access_token()
         if not access_token:
             logger.debug("[TickTick] No access token available")
@@ -117,7 +133,7 @@ class TickTickService:
         try:
             logger.debug("[TickTick] Parsing task datetime for weekly task")
             task_date = self._parse_task_datetime(task.date, task.from_time)
-            
+
             # Determine if this is an all-day task
             is_all_day = not task.from_time or not task.to_time
             logger.debug(f"[TickTick] Task is all-day: {is_all_day}")
@@ -195,7 +211,7 @@ class TickTickService:
         try:
             logger.debug("[TickTick] Parsing updated task datetime for weekly task")
             task_date = self._parse_task_datetime(updated_task.date, updated_task.from_time)
-            
+
             # Determine if this is an all-day task
             is_all_day = not updated_task.from_time or not updated_task.to_time
             logger.debug(f"[TickTick] Task is all-day: {is_all_day}")

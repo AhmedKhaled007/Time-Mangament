@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import logging
 from app.api.v1.api import api_router
-from app.core.config import settings
+from app.utlis.config import settings
 
 
 logger = logging.getLogger('app')

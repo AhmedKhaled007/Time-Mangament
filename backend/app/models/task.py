@@ -10,6 +10,7 @@ class WeeklyTaskBase(BaseModel):
     to_time: Optional[str] = Field(None, pattern=r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')    # HH:MM format
     date: str = Field(..., pattern=r'^\d{4}-\d{2}-\d{2}$')  # YYYY-MM-DD format
     lunch_id: Optional[int] = None
+    breakfast_id: Optional[int] = None
 
 class WeeklyTaskCreate(WeeklyTaskBase):
     pass
@@ -20,6 +21,7 @@ class WeeklyTaskUpdate(BaseModel):
     from_time: Optional[str] = None
     to_time: Optional[str] = None
     lunch_id: Optional[int] = None
+    breakfast_id: Optional[int] = None
 
 class WeeklyTask(WeeklyTaskBase):
     id: int
@@ -62,3 +64,22 @@ class LunchIdea(LunchIdeaBase):
 
 class DailyLunchUpdate(BaseModel):
     lunch_id: Optional[int] = None
+
+class BreakfastIdeaBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+
+class BreakfastIdeaCreate(BreakfastIdeaBase):
+    pass
+
+class BreakfastIdeaUpdate(BaseModel):
+    name: Optional[str] = None
+
+class BreakfastIdea(BreakfastIdeaBase):
+    id: int
+    created_at: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        from_attributes = True
+
+class DailyBreakfastUpdate(BaseModel):
+    breakfast_id: Optional[int] = None

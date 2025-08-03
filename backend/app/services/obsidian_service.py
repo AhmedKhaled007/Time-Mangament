@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import logging
 
 from app.services.task_service import task_service
-from app.core.config import settings
+from app.utlis.config import settings
 
 logger = logging.getLogger("app")
 
@@ -30,7 +30,7 @@ class ObsidianService:
         # Calculate days back to Friday: Friday=4, so we want (weekday - 4) % 7 days back
         days_since_friday = (today.weekday() - 4) % 7
         start_of_week = today - timedelta(days=days_since_friday)  # Start from Friday
-        
+
         # Format: weekly-planer-DD-MM-YYYY.md (using start of week date)
         filename = f"weekly-planer-{start_of_week.day}-{start_of_week.month}-{start_of_week.year}.md"
         return filename
@@ -39,7 +39,7 @@ class ObsidianService:
         """Get the full path for the current week's file"""
         if not self.vault_folder_path:
             return None
-        
+
         filename = self._generate_weekly_filename()
         return self.vault_folder_path / filename
 
@@ -97,7 +97,7 @@ class ObsidianService:
                         # Convert old file path to folder path for backwards compatibility
                         old_path = Path(data["vault_path"])
                         self.vault_folder_path = old_path.parent if old_path.suffix else old_path
-                    
+
                     self.auto_sync_enabled = data.get("auto_sync_enabled", False)
                     if data.get("last_sync"):
                         self.last_sync = datetime.fromisoformat(data["last_sync"])
@@ -191,7 +191,7 @@ class ObsidianService:
         try:
             content = await self.generate_obsidian_content()
             current_file_path = self._get_current_weekly_file_path()
-            
+
             if not current_file_path:
                 return {"success": False, "error": "Failed to generate file path"}
 
@@ -241,7 +241,7 @@ class ObsidianService:
     async def import_from_obsidian(self) -> Dict[str, Any]:
         """Import tasks from Obsidian file"""
         current_file_path = self._get_current_weekly_file_path()
-        
+
         if not current_file_path or not current_file_path.exists():
             return {"success": False, "error": "Obsidian file not found"}
 
