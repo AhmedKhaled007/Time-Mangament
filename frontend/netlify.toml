@@ -1,0 +1,59 @@
+[build]
+  # Directory to change to before starting a build
+  base = "frontend/"
+  
+  # Directory that contains the deploy-ready HTML files and assets
+  publish = "dist/"
+  
+  # Default build command
+  command = "npm run build"
+
+[functions]
+  # Directory for serverless functions
+  directory = "netlify/functions"
+
+[build.environment]
+  # Node.js version
+  NODE_VERSION = "18"
+  
+  # Enable TypeScript support
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Redirect all requests to index.html for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for better performance and security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Environment variables for different deploy contexts
+[context.production.environment]
+  NODE_ENV = "production"
+  VITE_API_BASE_URL = "/.netlify/functions"
+
+[context.deploy-preview.environment]
+  NODE_ENV = "staging"
+  VITE_API_BASE_URL = "/.netlify/functions"
+
+[context.branch-deploy.environment]
+  NODE_ENV = "development"
+  VITE_API_BASE_URL = "/.netlify/functions"
+
+# Note: Set the following environment variables in Netlify UI:
+# - DATABASE_URL: PostgreSQL connection string from Neon
+# - JWT_SECRET: Random secret key for JWT tokens
+# - VITE_GOOGLE_CLIENT_ID: Google OAuth Client ID

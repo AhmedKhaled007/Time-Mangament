@@ -1,3 +1,40 @@
+// User & Authentication Types
+export interface User {
+  id: number;
+  google_id: string;
+  email: string;
+  name: string;
+  picture?: string;
+  locale?: string;
+  created_at: string;
+  updated_at: string;
+  last_login: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error?: string;
+}
+
+export interface GoogleTokenPayload {
+  iss: string;
+  azp: string;
+  aud: string;
+  sub: string;
+  email: string;
+  email_verified: boolean;
+  at_hash: string;
+  name: string;
+  picture: string;
+  given_name: string;
+  family_name: string;
+  locale: string;
+  iat: number;
+  exp: number;
+}
+
 // API Types
 
 export interface WeeklyTask {
