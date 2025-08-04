@@ -133,11 +133,11 @@ const DayCard: React.FC<DayCardProps> = ({
             tasks.map((task) => (
               <div
                 key={task.id}
-                className={`group relative bg-white border-l-4 ${
+                className={`group relative ${
                   task.completed 
-                    ? 'border-green-500 bg-green-50' 
-                    : 'border-blue-500 hover:border-blue-600'
-                } rounded-r-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer`}
+                    ? 'bg-gray-100 border-l-4 border-gray-300 opacity-60' 
+                    : 'bg-white border-l-4 border-blue-500 hover:border-blue-600 shadow-sm hover:shadow-md'
+                } rounded-r-lg transition-all duration-200 cursor-pointer`}
                 onClick={() => onToggleTask(task.id)}
                 onContextMenu={(e) => handleContextMenu(e, task.id)}
               >
@@ -158,7 +158,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   {/* Task Content */}
                   <div className="flex-1 min-w-0">
                     <div className={`text-sm ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                      {task.from_time || task.to_time ? (
+                      {!task.completed && (task.from_time || task.to_time) ? (
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded">
@@ -168,14 +168,18 @@ const DayCard: React.FC<DayCardProps> = ({
                           <div className="font-medium">{task.text}</div>
                         </div>
                       ) : (
-                        <div className="font-medium">{task.text}</div>
+                        <div className={`${task.completed ? 'text-xs' : 'font-medium'}`}>{task.text}</div>
                       )}
                     </div>
                   </div>
                   
                   {/* Menu indicator - clickable 3 dots */}
                   <div 
-                    className="flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded cursor-pointer"
+                    className={`flex-shrink-0 transition-opacity p-1 hover:bg-gray-200 rounded cursor-pointer ${
+                      task.completed 
+                        ? 'opacity-30 group-hover:opacity-50' 
+                        : 'opacity-60 group-hover:opacity-100'
+                    }`}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent triggering task toggle
                       handleContextMenu(e, task.id);

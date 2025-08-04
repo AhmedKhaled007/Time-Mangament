@@ -79,6 +79,14 @@ class TaskService:
         if date:
             tasks = [task for task in tasks if task.date == date]
 
+        # Sort tasks: incomplete tasks first (by time), then completed tasks (by time)
+        def sort_key(task):
+            completed = task.completed
+            from_time = task.from_time or "99:99"  # Tasks without from_time go to end
+            to_time = task.to_time or "99:99"      # Tasks without to_time go to end
+            return (completed, from_time, to_time)  # completed=False comes before completed=True
+        
+        tasks.sort(key=sort_key)
         return tasks
 
     async def create_weekly_task(self, task_data: WeeklyTaskCreate) -> WeeklyTask:
@@ -98,15 +106,21 @@ class TaskService:
 
         await self._save_data(self.weekly_tasks_file, data)
 
-        # Create task in TickTick if integration is enabled
-        ticktick_result = await ticktick_service.create_weekly_task(task)
+        # Create task in TickTick if integration is enabled and task doesn't already have a TickTick ID
+        # Skip TickTick creation for imported tasks to prevent duplicates
+        if hasattr(task_data, 'ticktick_id') and task_data.ticktick_id:
+            logger.info(f"[TaskService] Skipping TickTick creation for imported task with ID: {task_data.ticktick_id}")
+            ticktick_result = None
+        else:
+            logger.info(f"[TaskService] Creating new task in TickTick: {task_data.text}")
+            ticktick_result = await ticktick_service.create_weekly_task(task)
+
         if ticktick_result and ticktick_result.get("status") == "success":
             # Store TickTick ID and project ID with the task for future updates
             for i, stored_task in enumerate(data["tasks"]):
                 if stored_task["id"] == task.id:
                     data["tasks"][i]["ticktick_id"] = ticktick_result.get("ticktick_id")
-                    if ticktick_result.get("ticktick_data"):
-                        data["tasks"][i]["project_id"] = ticktick_result["ticktick_data"].get("projectId")
+                    data["tasks"][i]["project_id"] = ticktick_result.get("project_id")
                     await self._save_data(self.weekly_tasks_file, data)
                     # Return updated task object with TickTick ID
                     return WeeklyTask(**data["tasks"][i])
@@ -146,6 +160,9 @@ class TaskService:
                 project_id = task.get("project_id")  # Store project_id when creating task
                 if ticktick_id and project_id:
                     await ticktick_service.delete_task(ticktick_id, project_id)
+                else:
+                    logger.warning(
+                        f"[TaskService] No TickTick ID found for task {task_id}, skipping deletion in TickTick, project_id: {project_id}, ticktick_id: {ticktick_id}")
 
                 data["tasks"].pop(i)
                 await self._save_data(self.weekly_tasks_file, data)

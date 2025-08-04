@@ -61,12 +61,12 @@ async def update_ticktick_settings(settings: TickTickSettings):
 
 @router.get("/ticktick", response_model=TickTickSettings)
 async def get_ticktick_settings():
-    """Get TickTick integration settings (without exposing access token)"""
+    """Get TickTick integration settings"""
     settings = load_settings()
-    # Don't expose the actual access token, just indicate if it's set
+    # Return the actual settings including the access token
     result = TickTickSettings(
         enabled=settings.ticktick.enabled,
-        access_token="***" if settings.ticktick.access_token else None,
+        access_token=settings.ticktick.access_token,
         default_project_id=settings.ticktick.default_project_id,
         username=settings.ticktick.username
     )

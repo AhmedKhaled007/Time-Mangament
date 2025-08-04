@@ -12,8 +12,11 @@ class WeeklyTaskBase(BaseModel):
     lunch_id: Optional[int] = None
     breakfast_id: Optional[int] = None
 
+
 class WeeklyTaskCreate(WeeklyTaskBase):
-    pass
+    ticktick_id: Optional[str] = None
+    project_id: Optional[str] = None
+
 
 class WeeklyTaskUpdate(BaseModel):
     text: Optional[str] = None
@@ -23,21 +26,26 @@ class WeeklyTaskUpdate(BaseModel):
     lunch_id: Optional[int] = None
     breakfast_id: Optional[int] = None
 
+
 class WeeklyTask(WeeklyTaskBase):
     id: int
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     ticktick_id: Optional[str] = None
+    project_id: Optional[str] = None
 
     class Config:
         from_attributes = True
+
 
 class DistractionBase(BaseModel):
     text: str = Field(..., min_length=1, max_length=200)
     time: str = Field(default_factory=lambda: datetime.now().strftime("%H:%M:%S"))
 
+
 class DistractionCreate(DistractionBase):
     pass
+
 
 class Distraction(DistractionBase):
     id: int
@@ -46,14 +54,18 @@ class Distraction(DistractionBase):
     class Config:
         from_attributes = True
 
+
 class LunchIdeaBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
+
 
 class LunchIdeaCreate(LunchIdeaBase):
     pass
 
+
 class LunchIdeaUpdate(BaseModel):
     name: Optional[str] = None
+
 
 class LunchIdea(LunchIdeaBase):
     id: int
@@ -62,17 +74,22 @@ class LunchIdea(LunchIdeaBase):
     class Config:
         from_attributes = True
 
+
 class DailyLunchUpdate(BaseModel):
     lunch_id: Optional[int] = None
+
 
 class BreakfastIdeaBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
 
+
 class BreakfastIdeaCreate(BreakfastIdeaBase):
     pass
 
+
 class BreakfastIdeaUpdate(BaseModel):
     name: Optional[str] = None
+
 
 class BreakfastIdea(BreakfastIdeaBase):
     id: int
@@ -80,6 +97,7 @@ class BreakfastIdea(BreakfastIdeaBase):
 
     class Config:
         from_attributes = True
+
 
 class DailyBreakfastUpdate(BaseModel):
     breakfast_id: Optional[int] = None

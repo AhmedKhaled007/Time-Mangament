@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 import json
 import os
 
-from app.models.task import WeeklyTask
+from app.models.task import WeeklyTask, WeeklyTaskCreate
 
 logger = logging.getLogger("app")
 
@@ -86,6 +86,37 @@ class TickTickService:
             "status": "error",
             "error": error_message
         }
+
+    async def test_connection(self, access_token: str) -> Dict[str, Any]:
+        """Test connection to TickTick API with provided access token."""
+        logger.debug("[TickTick] Testing connection with provided access token")
+
+        url = f"{self.base_url}/project"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        logger.debug(f"[TickTick] Making GET request to: {url}")
+        response = self.session.get(url, headers=headers)
+
+        logger.debug(f"[TickTick] Test connection response: {response.status_code}")
+
+        if response.status_code == 200:
+            projects = response.json()
+            logger.debug(f"[TickTick] Connection successful, found {len(projects)} projects")
+            return {
+                "success": True,
+                "message": "Connection to TickTick API successful",
+                "user": "TickTick User",  # Generic user since we can't get user info
+                "projects_count": len(projects)
+            }
+        else:
+            logger.error(f"[TickTick] Connection failed: {response.status_code} - {response.text}")
+            return {
+                "success": False,
+                "message": f"Connection failed: {response.status_code} - {response.text}"
+            }
 
     async def get_projects(self) -> Optional[List[Dict[str, Any]]]:
         """Get all projects from TickTick."""
@@ -262,7 +293,7 @@ class TickTickService:
             logger.error(f"Failed to update TickTick weekly task: {str(e)}")
             return self._create_error_response(f"Failed to update TickTick weekly task: {str(e)}")
 
-    async def update_task_completion(self, ticktick_id: str, completed: bool, project_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    async def update_task_completion(self, ticktick_id: str, completed: bool, projectId: str) -> Optional[Dict[str, Any]]:
         """Update task completion status in TickTick."""
         logger.debug(f"[TickTick] Starting task completion update for ID: {ticktick_id}")
         logger.debug(f"[TickTick] Setting completed status to: {completed}")
@@ -275,7 +306,7 @@ class TickTickService:
         try:
             if completed:
                 # Complete the task
-                url = f"{self.base_url}/task/{ticktick_id}/complete"
+                url = f"{self.base_url}/project/{projectId}/task/{ticktick_id}/complete  "
                 headers = {
                     "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json"
@@ -357,6 +388,106 @@ class TickTickService:
             logger.debug(f"[TickTick] Exception during task deletion: {str(e)}")
             logger.error(f"Failed to delete TickTick task: {str(e)}")
             return self._create_error_response(f"Failed to delete TickTick task: {str(e)}")
+
+    async def get_tasks(self, project_id: Optional[str] = None) -> Dict[str, Any]:
+        """Get tasks from TickTick, optionally filtered by project."""
+        logger.debug("[TickTick] Fetching tasks")
+
+        access_token = self._get_access_token()
+        if not access_token:
+            logger.debug("[TickTick] No access token available")
+            return self._create_error_response("No access token available for TickTick")
+
+        try:
+            # If project_id is provided, get tasks for that specific project
+            if project_id:
+                url = f"{self.base_url}/project/{project_id}/data"
+            else:
+                # Use inbox for non-project tasks
+                url = f"{self.base_url}/project/inbox117601928/data"
+
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+
+            logger.debug(f"[TickTick] Making GET request to: {url}")
+            response = self.session.get(url, headers=headers)
+
+            logger.debug(f"[TickTick] Get tasks response: {response.status_code}")
+            logger.debug(f"[TickTick] Response text preview: {response.text}...")
+
+            if response.status_code == 200:
+                try:
+                    response_data = response.json()
+                    logger.debug(f"[TickTick] Response keys: {response_data.keys() if isinstance(response_data, dict) else 'Not a dict'}")
+
+                    # TickTick API returns: {"project": {...}, "tasks": [...], "columns": [...]}
+                    if isinstance(response_data, dict) and "tasks" in response_data:
+                        tasks = response_data["tasks"]
+                        logger.debug(f"[TickTick] Found {len(tasks)} tasks")
+                        if tasks:
+                            logger.debug(f"[TickTick] First task preview: {str(tasks[0])[:100]}...")
+                        return {
+                            "status": "success",
+                            "tasks": tasks,
+                            "count": len(tasks)
+                        }
+                    else:
+                        logger.error(f"[TickTick] Unexpected response structure: {response_data}")
+                        return self._create_error_response("Unexpected TickTick API response structure")
+                except Exception as json_error:
+                    logger.error(f"[TickTick] Failed to parse JSON response: {json_error}")
+                    return self._create_error_response(f"Failed to parse TickTick response: {json_error}")
+            else:
+                error_msg = f"TickTick API returned {response.status_code}: {response.text}"
+                logger.error(f"Failed to fetch TickTick tasks: {error_msg}")
+                return self._create_error_response(f"Failed to fetch TickTick tasks: {error_msg}")
+
+        except Exception as e:
+            logger.error(f"Failed to fetch TickTick tasks: {str(e)}")
+            return self._create_error_response(f"Failed to fetch TickTick tasks: {str(e)}")
+
+    def convert_ticktick_to_weekly_task(self, ticktick_task: Dict[str, Any]) -> WeeklyTaskCreate:
+        """Convert a TickTick task to weekly task format."""
+        from datetime import datetime, date
+
+        # Extract date information from TickTick task
+        start_date = ticktick_task.get("startDate")
+        due_date = ticktick_task.get("dueDate")
+
+        # Parse dates and times
+        task_date = date.today().isoformat()  # Default to today
+        from_time = None
+        to_time = None
+
+        if start_date:
+            try:
+                start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                start_dt = start_dt.astimezone(ZoneInfo("Africa/Cairo"))
+
+                task_date = start_dt.date().isoformat()
+                from_time = start_dt.strftime("%H:%M")
+            except:
+                pass
+
+        if due_date:
+            try:
+                due_dt = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
+                due_dt = due_dt.astimezone(ZoneInfo("Africa/Cairo"))
+                to_time = due_dt.strftime("%H:%M")
+            except:
+                pass
+
+        return WeeklyTaskCreate(
+            text=ticktick_task.get("title", ""),
+            date=task_date,
+            from_time=from_time,
+            to_time=to_time,
+            completed=ticktick_task.get("status", 0) == 1,
+            ticktick_id=ticktick_task.get("id"),
+            project_id=ticktick_task.get("projectId", None)
+        )
 
 
 # Global instance

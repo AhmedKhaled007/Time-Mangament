@@ -215,9 +215,28 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
     }
   };
 
-  // Group weekly tasks by date
+  // Group weekly tasks by date and sort by completion status then time
   const getTasksForDate = (dateStr: string): WeeklyTask[] => {
-    return weeklyTasks.filter(task => task.date === dateStr);
+    const tasks = weeklyTasks.filter(task => task.date === dateStr);
+    
+    // Sort tasks: incomplete tasks first (by time), then completed tasks (by time)
+    return tasks.sort((a, b) => {
+      // First sort by completion status (incomplete tasks first)
+      if (a.completed !== b.completed) {
+        return a.completed ? 1 : -1; // false (incomplete) comes before true (completed)
+      }
+      
+      // Then sort by time within the same completion status
+      const aFromTime = a.from_time || "99:99";
+      const bFromTime = b.from_time || "99:99";
+      const aToTime = a.to_time || "99:99";
+      const bToTime = b.to_time || "99:99";
+      
+      if (aFromTime !== bFromTime) {
+        return aFromTime.localeCompare(bFromTime);
+      }
+      return aToTime.localeCompare(bToTime);
+    });
   };
 
   const weekDays = getWeekDays();
