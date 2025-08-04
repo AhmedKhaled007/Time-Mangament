@@ -2,15 +2,15 @@
   # Directory to change to before starting a build
   base = "frontend/"
   
-  # Directory that contains the deploy-ready HTML files and assets
-  publish = "dist/"
+  # Directory that contains the deploy-ready HTML files and assets (relative to repository root)
+  publish = "frontend/dist/"
   
   # Default build command
   command = "npm run build"
 
 [functions]
-  # Directory for serverless functions
-  directory = "netlify/functions"
+  # Directory for serverless functions (relative to repository root)
+  directory = "frontend/netlify/functions"
 
 [build.environment]
   # Node.js version
