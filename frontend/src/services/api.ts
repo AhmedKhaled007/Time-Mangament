@@ -7,8 +7,6 @@ import type {
   Distraction,
   DistractionCreate,
   TaskStats,
-  ObsidianSettings,
-  SyncResult,
   LunchIdea,
   LunchIdeaCreate,
   LunchIdeaUpdate,
@@ -22,12 +20,12 @@ import type {
 // Auto-detect API base URL based on environment
 const getApiBaseUrl = () => {
   // Use environment variable if available
-  if (import.meta.env.VITE_API_BASE_URL) {
+  if (import.meta.env?.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
   
   // Check if we're in production (Netlify deployment)
-  if (import.meta.env.PROD) {
+  if (import.meta.env?.PROD) {
     // In production, use Netlify functions
     return '/.netlify/functions';
   }
