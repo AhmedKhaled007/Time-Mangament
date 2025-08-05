@@ -6,7 +6,7 @@
   publish = "dist/"
   
   # Default build command
-  command = "npx vite build"
+  command = "npm install && npm run build"
 
 [functions]
   # Directory for serverless functions (relative to repository root)
