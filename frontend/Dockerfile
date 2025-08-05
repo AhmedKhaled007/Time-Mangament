@@ -12,7 +12,7 @@ RUN npm ci
 COPY . .
 
 # Expose the port
-EXPOSE 5000
+EXPOSE 5173
 
-# Start the development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5000"]
+# Start the development server using Vite directly since netlify dev doesn't support host/port options in Docker
+CMD ["npm", "run", "dev:vite", "--", "--host", "0.0.0.0", "--port", "5173"]

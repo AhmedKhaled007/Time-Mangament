@@ -1,22 +1,16 @@
-version: '3.8'
-
 services:
-
-
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
-    depends_on:
-      - backend
+    environment:
+      - VITE_GOOGLE_CLIENT_ID=1046275231670-5lhqum1ge3bjp3dbiesd1nehe366ljm3.apps.googleusercontent.com
+      - NODE_ENV=development
     networks:
       - time-management-network
 
 networks:
   time-management-network:
     driver: bridge
-
-volumes:
-  backend-data:
