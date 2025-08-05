@@ -1,25 +1,27 @@
 import type { Context } from '@netlify/functions';
 import { createDbClient, handleDbError, createJsonResponse } from './lib/db';
 import { withAuth, type AuthContext } from './lib/auth';
+import { ensureDbInitialized } from './lib/init-db';
 
 const handleDistractions = async (request: Request, auth: AuthContext, context: Context) => {
-  const client = await createDbClient();
+  // Ensure database tables exist
+  await ensureDbInitialized();
+  
+  const sql = createDbClient();
   
   try {
     const method = request.method;
     
     // GET /api/distractions - Get all distractions
     if (method === 'GET') {
-      const query = `
+      const result = await sql`
         SELECT id, text, created_at
         FROM distractions
-        WHERE user_id = $1
+        WHERE user_id = ${auth.userId}
         ORDER BY created_at DESC
         LIMIT 100
       `;
-      
-      const result = await client.query(query, [auth.userId]);
-      return createJsonResponse(result.rows);
+      return createJsonResponse(result);
     }
     
     // POST /api/distractions - Log new distraction
@@ -31,22 +33,18 @@ const handleDistractions = async (request: Request, auth: AuthContext, context: 
         return createJsonResponse({ error: 'Text is required' }, 400);
       }
       
-      const query = `
+      const result = await sql`
         INSERT INTO distractions (user_id, text)
-        VALUES ($1, $2)
+        VALUES (${auth.userId}, ${text.trim()})
         RETURNING id, text, created_at
       `;
-      
-      const result = await client.query(query, [auth.userId, text.trim()]);
-      return createJsonResponse(result.rows[0], 201);
+      return createJsonResponse(result[0], 201);
     }
     
     return createJsonResponse({ error: 'Method not allowed' }, 405);
     
   } catch (error) {
     return handleDbError(error);
-  } finally {
-    await client.end();
   }
 };
 

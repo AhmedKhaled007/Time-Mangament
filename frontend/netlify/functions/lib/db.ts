@@ -1,13 +1,8 @@
-import { Client } from 'pg';
+import { neon } from '@netlify/neon';
 
-// Database connection utility
-export async function createDbClient(): Promise<Client> {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-  });
-  
-  await client.connect();
-  return client;
+// Database connection utility - uses NETLIFY_DATABASE_URL automatically
+export function createDbClient() {
+  return neon(); // Automatically uses NETLIFY_DATABASE_URL
 }
 
 // Helper function to handle database errors

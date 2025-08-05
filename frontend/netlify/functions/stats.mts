@@ -1,31 +1,31 @@
 import type { Context } from '@netlify/functions';
 import { createDbClient, handleDbError, createJsonResponse } from './lib/db';
+import { ensureDbInitialized } from './lib/init-db';
 import { withAuth, type AuthContext } from './lib/auth';
 
 const handleStats = async (request: Request, auth: AuthContext, context: Context) => {
-  const client = await createDbClient();
+  // Ensure database tables exist
+  await ensureDbInitialized();
+  
+  const sql = createDbClient();
   
   try {
     const method = request.method;
     
     // GET /api/stats - Get task statistics
     if (method === 'GET') {
-      const queries = [
+      const results = await Promise.all([
         // Total weekly tasks
-        'SELECT COUNT(*) as total_weekly_tasks FROM weekly_tasks WHERE user_id = $1',
+        sql`SELECT COUNT(*) as total_weekly_tasks FROM weekly_tasks WHERE user_id = ${auth.userId}`,
         // Completed weekly tasks
-        'SELECT COUNT(*) as completed_weekly_tasks FROM weekly_tasks WHERE user_id = $1 AND completed = true',
+        sql`SELECT COUNT(*) as completed_weekly_tasks FROM weekly_tasks WHERE user_id = ${auth.userId} AND completed = true`,
         // Total distractions
-        'SELECT COUNT(*) as total_distractions FROM distractions WHERE user_id = $1'
-      ];
+        sql`SELECT COUNT(*) as total_distractions FROM distractions WHERE user_id = ${auth.userId}`
+      ]);
       
-      const results = await Promise.all(
-        queries.map(query => client.query(query, [auth.userId]))
-      );
-      
-      const totalWeeklyTasks = parseInt(results[0].rows[0].total_weekly_tasks);
-      const completedWeeklyTasks = parseInt(results[1].rows[0].completed_weekly_tasks);
-      const totalDistractions = parseInt(results[2].rows[0].total_distractions);
+      const totalWeeklyTasks = parseInt(results[0][0].total_weekly_tasks);
+      const completedWeeklyTasks = parseInt(results[1][0].completed_weekly_tasks);
+      const totalDistractions = parseInt(results[2][0].total_distractions);
       
       // Calculate productivity score (max 100, reduced by distractions)
       const productivityScore = Math.max(0, 100 - (totalDistractions * 10));
@@ -44,8 +44,6 @@ const handleStats = async (request: Request, auth: AuthContext, context: Context
     
   } catch (error) {
     return handleDbError(error);
-  } finally {
-    await client.end();
   }
 };
 

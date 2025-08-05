@@ -1,5 +1,6 @@
 import type { Context } from '@netlify/functions';
 import { createDbClient, handleDbError, createJsonResponse } from './lib/db';
+import { ensureDbInitialized } from './lib/init-db';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 
@@ -68,7 +69,10 @@ async function verifyGoogleToken(idToken: string): Promise<GoogleTokenPayload> {
 }
 
 export default async (request: Request, context: Context) => {
-  const client = await createDbClient();
+  // Ensure database tables exist
+  await ensureDbInitialized();
+  
+  const sql = createDbClient();
   
   try {
     const method = request.method;
@@ -87,40 +91,26 @@ export default async (request: Request, context: Context) => {
         const payload = await verifyGoogleToken(idToken);
         
         // Check if user exists, if not create new user
-        let userQuery = 'SELECT * FROM users WHERE google_id = $1';
-        let userResult = await client.query(userQuery, [payload.sub]);
+        let userResult = await sql`SELECT * FROM users WHERE google_id = ${payload.sub}`;
         
         let user;
-        if (userResult.rows.length === 0) {
+        if (userResult.length === 0) {
           // Create new user
-          const insertQuery = `
+          const insertResult = await sql`
             INSERT INTO users (google_id, email, name, picture, locale, last_login)
-            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+            VALUES (${payload.sub}, ${payload.email}, ${payload.name}, ${payload.picture}, ${payload.locale || 'en'}, CURRENT_TIMESTAMP)
             RETURNING *
           `;
-          const insertResult = await client.query(insertQuery, [
-            payload.sub,
-            payload.email,
-            payload.name,
-            payload.picture,
-            payload.locale || 'en'
-          ]);
-          user = insertResult.rows[0];
+          user = insertResult[0];
         } else {
           // Update existing user's last login and info
-          const updateQuery = `
+          const updateResult = await sql`
             UPDATE users 
-            SET name = $2, picture = $3, locale = $4, last_login = CURRENT_TIMESTAMP
-            WHERE google_id = $1
+            SET name = ${payload.name}, picture = ${payload.picture}, locale = ${payload.locale || 'en'}, last_login = CURRENT_TIMESTAMP
+            WHERE google_id = ${payload.sub}
             RETURNING *
           `;
-          const updateResult = await client.query(updateQuery, [
-            payload.sub,
-            payload.name,
-            payload.picture,
-            payload.locale || 'en'
-          ]);
-          user = updateResult.rows[0];
+          user = updateResult[0];
         }
         
         // Create JWT token for the user
@@ -161,15 +151,14 @@ export default async (request: Request, context: Context) => {
         const decoded = jwt.verify(token, jwtSecret) as any;
         
         // Get updated user info from database
-        const userQuery = 'SELECT * FROM users WHERE id = $1';
-        const userResult = await client.query(userQuery, [decoded.userId]);
+        const userResult = await sql`SELECT * FROM users WHERE id = ${decoded.userId}`;
         
-        if (userResult.rows.length === 0) {
+        if (userResult.length === 0) {
           return createJsonResponse({ error: 'User not found' }, 404);
         }
         
         return createJsonResponse({
-          user: userResult.rows[0],
+          user: userResult[0],
           valid: true
         });
         
@@ -187,7 +176,5 @@ export default async (request: Request, context: Context) => {
     
   } catch (error) {
     return handleDbError(error);
-  } finally {
-    await client.end();
   }
 };
