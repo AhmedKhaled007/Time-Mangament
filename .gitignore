@@ -23,7 +23,7 @@ MANIFEST
 
 # Virtual environments
 .env
-.venv
+.venv*
 env/
 venv/
 ENV/
@@ -35,6 +35,9 @@ venv.bak/
 
 # VS Code
 .vscode/
+*claude*
+*CLAUDE*
+
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -62,6 +65,11 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Frontend specific
+frontend/.env.production
+frontend/dist/
+frontend/.netlify/
 
 # Logs
 logs
