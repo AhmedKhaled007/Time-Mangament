@@ -1,6 +1,7 @@
 import type { Context } from '@netlify/functions';
 import { createDbClient, handleDbError, createJsonResponse } from './lib/db';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 
 interface GoogleTokenPayload {
   iss: string;
@@ -21,22 +22,49 @@ interface GoogleTokenPayload {
 
 // Verify Google ID token and get payload
 async function verifyGoogleToken(idToken: string): Promise<GoogleTokenPayload> {
-  // For production, you should verify the token with Google's API
-  // For now, we'll decode the JWT without verification (development only)
-  const decoded = jwt.decode(idToken) as GoogleTokenPayload;
+  const client = new OAuth2Client();
   
-  if (!decoded || !decoded.email || !decoded.sub) {
-    throw new Error('Invalid token payload');
+  try {
+    // Verify the token with Google's API
+    const clientId = process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      throw new Error('Google Client ID not configured');
+    }
+    
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: clientId,
+    });
+    
+    const payload = ticket.getPayload();
+    
+    if (!payload || !payload.email || !payload.sub) {
+      throw new Error('Invalid token payload');
+    }
+    
+    // Map Google payload to our interface
+    const googlePayload: GoogleTokenPayload = {
+      iss: payload.iss!,
+      azp: payload.azp!,
+      aud: payload.aud as string,
+      sub: payload.sub!,
+      email: payload.email!,
+      email_verified: payload.email_verified as boolean,
+      at_hash: payload.at_hash,
+      name: payload.name!,
+      picture: payload.picture!,
+      given_name: payload.given_name!,
+      family_name: payload.family_name!,
+      locale: payload.locale!,
+      iat: payload.iat!,
+      exp: payload.exp!
+    };
+    
+    return googlePayload;
+  } catch (error) {
+    console.error('Google token verification failed:', error);
+    throw new Error('Invalid or expired Google token');
   }
-  
-  // In production, add proper token verification:
-  // const ticket = await client.verifyIdToken({
-  //   idToken,
-  //   audience: process.env.GOOGLE_CLIENT_ID,
-  // });
-  // const payload = ticket.getPayload();
-  
-  return decoded;
 }
 
 export default async (request: Request, context: Context) => {

@@ -56,4 +56,5 @@
 # Note: Set the following environment variables in Netlify UI:
 # - DATABASE_URL: PostgreSQL connection string from Neon
 # - JWT_SECRET: Random secret key for JWT tokens
-# - VITE_GOOGLE_CLIENT_ID: Google OAuth Client ID
+# - VITE_GOOGLE_CLIENT_ID: Google OAuth Client ID (for frontend)
+# - GOOGLE_CLIENT_ID: Google OAuth Client ID (for serverless functions)
