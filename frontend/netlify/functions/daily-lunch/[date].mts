@@ -3,7 +3,7 @@ import { createDbClient, handleDbError, createJsonResponse } from '../lib/db';
 import { withAuth, type AuthContext } from '../lib/auth';
 
 const handleDailyLunch = async (request: Request, auth: AuthContext, context: Context) => {
-  const client = await createDbClient();
+  const sql = createDbClient();
   
   try {
     const date = context.params?.date;
@@ -15,19 +15,17 @@ const handleDailyLunch = async (request: Request, auth: AuthContext, context: Co
     
     // GET /api/daily-lunch/:date - Get daily lunch selection
     if (method === 'GET') {
-      const query = `
+      const result = await sql`
         SELECT date, lunch_id
         FROM daily_lunches
-        WHERE date = $1 AND user_id = $2
+        WHERE date = ${date} AND user_id = ${auth.userId}
       `;
       
-      const result = await client.query(query, [date, auth.userId]);
-      
-      if (result.rows.length === 0) {
+      if (result.length === 0) {
         return createJsonResponse({ date, lunch_id: null });
       }
       
-      return createJsonResponse(result.rows[0]);
+      return createJsonResponse(result[0]);
     }
     
     // PUT /api/daily-lunch/:date - Update daily lunch selection
@@ -37,25 +35,23 @@ const handleDailyLunch = async (request: Request, auth: AuthContext, context: Co
       
       if (lunch_id === null || lunch_id === undefined) {
         // Remove lunch selection
-        const query = 'DELETE FROM daily_lunches WHERE date = $1 AND user_id = $2';
-        await client.query(query, [date, auth.userId]);
+        await sql`DELETE FROM daily_lunches WHERE date = ${date} AND user_id = ${auth.userId}`;
         return createJsonResponse({ message: 'Daily lunch updated successfully', date, lunch_id: null });
       }
       
       // Upsert lunch selection
-      const query = `
+      const result = await sql`
         INSERT INTO daily_lunches (user_id, date, lunch_id)
-        VALUES ($1, $2, $3)
+        VALUES (${auth.userId}, ${date}, ${lunch_id})
         ON CONFLICT (user_id, date) 
-        DO UPDATE SET lunch_id = $3, updated_at = CURRENT_TIMESTAMP
+        DO UPDATE SET lunch_id = ${lunch_id}, updated_at = CURRENT_TIMESTAMP
         RETURNING date, lunch_id
       `;
       
-      const result = await client.query(query, [auth.userId, date, lunch_id]);
       return createJsonResponse({ 
         message: 'Daily lunch updated successfully', 
-        date: result.rows[0].date, 
-        lunch_id: result.rows[0].lunch_id 
+        date: result[0].date, 
+        lunch_id: result[0].lunch_id 
       });
     }
     
@@ -63,8 +59,6 @@ const handleDailyLunch = async (request: Request, auth: AuthContext, context: Co
     
   } catch (error) {
     return handleDbError(error);
-  } finally {
-    await client.end();
   }
 };
 

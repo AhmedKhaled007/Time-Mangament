@@ -3,7 +3,7 @@ import { createDbClient, handleDbError, createJsonResponse } from '../lib/db';
 import { withAuth, type AuthContext } from '../lib/auth';
 
 const handleBreakfastIdea = async (request: Request, auth: AuthContext, context: Context) => {
-  const client = await createDbClient();
+  const sql = createDbClient();
   
   try {
     const breakfastId = context.params?.id;
@@ -22,28 +22,29 @@ const handleBreakfastIdea = async (request: Request, auth: AuthContext, context:
         return createJsonResponse({ error: 'Name is required' }, 400);
       }
       
-      const query = `
+      const result = await sql`
         UPDATE breakfast_ideas 
-        SET name = $3
-        WHERE id = $1 AND user_id = $2
+        SET name = ${name.trim()}
+        WHERE id = ${breakfastId} AND user_id = ${auth.userId}
         RETURNING id, name, created_at
       `;
       
-      const result = await client.query(query, [breakfastId, auth.userId, name.trim()]);
-      
-      if (result.rows.length === 0) {
+      if (result.length === 0) {
         return createJsonResponse({ error: 'Breakfast idea not found' }, 404);
       }
       
-      return createJsonResponse(result.rows[0]);
+      return createJsonResponse(result[0]);
     }
     
     // DELETE /api/breakfast-ideas/:id - Delete breakfast idea
     if (method === 'DELETE') {
-      const query = 'DELETE FROM breakfast_ideas WHERE id = $1 AND user_id = $2 RETURNING id';
-      const result = await client.query(query, [breakfastId, auth.userId]);
+      const result = await sql`
+        DELETE FROM breakfast_ideas 
+        WHERE id = ${breakfastId} AND user_id = ${auth.userId} 
+        RETURNING id
+      `;
       
-      if (result.rows.length === 0) {
+      if (result.length === 0) {
         return createJsonResponse({ error: 'Breakfast idea not found' }, 404);
       }
       
@@ -54,8 +55,6 @@ const handleBreakfastIdea = async (request: Request, auth: AuthContext, context:
     
   } catch (error) {
     return handleDbError(error);
-  } finally {
-    await client.end();
   }
 };
 

@@ -3,7 +3,7 @@ import { createDbClient, handleDbError, createJsonResponse } from '../lib/db';
 import { withAuth, type AuthContext } from '../lib/auth';
 
 const handleDailyBreakfast = async (request: Request, auth: AuthContext, context: Context) => {
-  const client = await createDbClient();
+  const sql = createDbClient();
   
   try {
     const date = context.params?.date;
@@ -15,19 +15,17 @@ const handleDailyBreakfast = async (request: Request, auth: AuthContext, context
     
     // GET /api/daily-breakfast/:date - Get daily breakfast selection
     if (method === 'GET') {
-      const query = `
+      const result = await sql`
         SELECT date, breakfast_id
         FROM daily_breakfasts
-        WHERE date = $1 AND user_id = $2
+        WHERE date = ${date} AND user_id = ${auth.userId}
       `;
       
-      const result = await client.query(query, [date, auth.userId]);
-      
-      if (result.rows.length === 0) {
+      if (result.length === 0) {
         return createJsonResponse({ date, breakfast_id: null });
       }
       
-      return createJsonResponse(result.rows[0]);
+      return createJsonResponse(result[0]);
     }
     
     // PUT /api/daily-breakfast/:date - Update daily breakfast selection
@@ -37,25 +35,23 @@ const handleDailyBreakfast = async (request: Request, auth: AuthContext, context
       
       if (breakfast_id === null || breakfast_id === undefined) {
         // Remove breakfast selection
-        const query = 'DELETE FROM daily_breakfasts WHERE date = $1 AND user_id = $2';
-        await client.query(query, [date, auth.userId]);
+        await sql`DELETE FROM daily_breakfasts WHERE date = ${date} AND user_id = ${auth.userId}`;
         return createJsonResponse({ message: 'Daily breakfast updated successfully', date, breakfast_id: null });
       }
       
       // Upsert breakfast selection
-      const query = `
+      const result = await sql`
         INSERT INTO daily_breakfasts (user_id, date, breakfast_id)
-        VALUES ($1, $2, $3)
+        VALUES (${auth.userId}, ${date}, ${breakfast_id})
         ON CONFLICT (user_id, date) 
-        DO UPDATE SET breakfast_id = $3, updated_at = CURRENT_TIMESTAMP
+        DO UPDATE SET breakfast_id = ${breakfast_id}, updated_at = CURRENT_TIMESTAMP
         RETURNING date, breakfast_id
       `;
       
-      const result = await client.query(query, [auth.userId, date, breakfast_id]);
       return createJsonResponse({ 
         message: 'Daily breakfast updated successfully', 
-        date: result.rows[0].date, 
-        breakfast_id: result.rows[0].breakfast_id 
+        date: result[0].date, 
+        breakfast_id: result[0].breakfast_id 
       });
     }
     
@@ -63,8 +59,6 @@ const handleDailyBreakfast = async (request: Request, auth: AuthContext, context
     
   } catch (error) {
     return handleDbError(error);
-  } finally {
-    await client.end();
   }
 };
 
