@@ -6,7 +6,7 @@
   publish = "dist/"
   
   # Default build command
-  command = "npm run build"
+  command = "npx vite build"
 
 [functions]
   # Directory for serverless functions (relative to repository root)
