@@ -6,7 +6,7 @@
   publish = "dist/"
   
   # Default build command
-  command = "npm install && npm run build"
+  command = "npm install --include=dev && npm run build"
 
 [functions]
   # Directory for serverless functions (relative to repository root)
