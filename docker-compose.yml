@@ -1,18 +1,7 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend/data:/app/data
-    environment:
-      - PYTHONUNBUFFERED=1
-    networks:
-      - time-management-network
+
 
   frontend:
     build:
