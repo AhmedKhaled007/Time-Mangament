@@ -21,25 +21,19 @@ export async function authenticateUser(request: Request): Promise<AuthContext | 
     const decoded = jwt.verify(token, jwtSecret) as any;
     
     // Verify user still exists in database
-    const client = await createDbClient();
-    try {
-      const userQuery = 'SELECT id, email, google_id FROM users WHERE id = $1';
-      const userResult = await client.query(userQuery, [decoded.userId]);
-      
-      if (userResult.rows.length === 0) {
-        return createJsonResponse({ error: 'User not found' }, 404);
-      }
-      
-      const user = userResult.rows[0];
-      return {
-        userId: user.id,
-        email: user.email,
-        googleId: user.google_id
-      };
-      
-    } finally {
-      await client.end();
+    const sql = createDbClient();
+    const userResult = await sql`SELECT id, email, google_id FROM users WHERE id = ${decoded.userId}`;
+    
+    if (userResult.length === 0) {
+      return createJsonResponse({ error: 'User not found' }, 404);
     }
+    
+    const user = userResult[0];
+    return {
+      userId: user.id,
+      email: user.email,
+      googleId: user.google_id
+    };
     
   } catch (jwtError) {
     console.error('JWT verification error:', jwtError);
