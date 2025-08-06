@@ -2,18 +2,18 @@ import type { Context } from '@netlify/functions';
 import { createDbClient, handleDbError, createJsonResponse } from '../lib/db';
 import { withAuth, type AuthContext } from '../lib/auth';
 
-const handleBreakfastIdea = async (request: Request, auth: AuthContext, context: Context) => {
+const handleLunchIdea = async (request: Request, auth: AuthContext, context: Context) => {
   const sql = createDbClient();
   
   try {
-    const breakfastId = context.params?.id;
+    const lunchId = context.params?.id;
     const method = request.method;
     
-    if (!breakfastId) {
-      return createJsonResponse({ error: 'Breakfast ID is required' }, 400);
+    if (!lunchId) {
+      return createJsonResponse({ error: 'Lunch ID is required' }, 400);
     }
     
-    // PUT /api/breakfast-ideas/:id - Update breakfast idea
+    // PUT /api/lunch-ideas/:id - Update lunch idea
     if (method === 'PUT') {
       const body = await request.json();
       const { name } = body;
@@ -23,32 +23,32 @@ const handleBreakfastIdea = async (request: Request, auth: AuthContext, context:
       }
       
       const result = await sql`
-        UPDATE breakfast_ideas 
+        UPDATE lunch_ideas 
         SET name = ${name.trim()}
-        WHERE id = ${breakfastId} AND user_id = ${auth.userId}
+        WHERE id = ${lunchId} AND user_id = ${auth.userId}
         RETURNING id, name, created_at
       `;
       
       if (result.length === 0) {
-        return createJsonResponse({ error: 'Breakfast idea not found' }, 404);
+        return createJsonResponse({ error: 'Lunch idea not found' }, 404);
       }
       
       return createJsonResponse(result[0]);
     }
     
-    // DELETE /api/breakfast-ideas/:id - Delete breakfast idea
+    // DELETE /api/lunch-ideas/:id - Delete lunch idea
     if (method === 'DELETE') {
       const result = await sql`
-        DELETE FROM breakfast_ideas 
-        WHERE id = ${breakfastId} AND user_id = ${auth.userId} 
+        DELETE FROM lunch_ideas 
+        WHERE id = ${lunchId} AND user_id = ${auth.userId} 
         RETURNING id
       `;
       
       if (result.length === 0) {
-        return createJsonResponse({ error: 'Breakfast idea not found' }, 404);
+        return createJsonResponse({ error: 'Lunch idea not found' }, 404);
       }
       
-      return createJsonResponse({ message: 'Breakfast idea deleted successfully' });
+      return createJsonResponse({ message: 'Lunch idea deleted successfully' });
     }
     
     return createJsonResponse({ error: 'Method not allowed' }, 405);
@@ -58,4 +58,8 @@ const handleBreakfastIdea = async (request: Request, auth: AuthContext, context:
   }
 };
 
-export default withAuth(handleBreakfastIdea);
+export default withAuth(handleLunchIdea);
+
+export const config = {
+  path: "/lunch-ideas/:id"
+};

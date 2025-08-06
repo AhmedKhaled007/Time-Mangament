@@ -1,6 +1,6 @@
 import type { Context } from '@netlify/functions';
-import { createDbClient, handleDbError, createJsonResponse } from '../lib/db';
-import { withAuth, type AuthContext } from '../lib/auth';
+import { createDbClient, handleDbError, createJsonResponse } from './lib/db';
+import { withAuth, type AuthContext } from './lib/auth';
 
 const handleWeeklyTaskById = async (request: Request, auth: AuthContext, context: Context) => {
   const sql = createDbClient();
@@ -62,3 +62,7 @@ const handleWeeklyTaskById = async (request: Request, auth: AuthContext, context
 };
 
 export default withAuth(handleWeeklyTaskById);
+
+export const config = {
+  path: "/weekly-tasks/:id"
+};

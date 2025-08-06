@@ -1,11 +1,9 @@
 import type { Context } from '@netlify/functions';
 import { createDbClient, handleDbError, createJsonResponse } from './lib/db';
 import { withAuth, type AuthContext } from './lib/auth';
-import { ensureDbInitialized } from './lib/init-db';
 
 const handleLunchIdeas = async (request: Request, auth: AuthContext, context: Context) => {
   // Ensure database tables exist
-  await ensureDbInitialized();
   
   const sql = createDbClient();
   

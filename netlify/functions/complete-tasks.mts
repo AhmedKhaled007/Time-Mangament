@@ -39,3 +39,8 @@ const handleToggleTask = async (request: Request, auth: AuthContext, context: Co
 };
 
 export default withAuth(handleToggleTask);
+
+
+export const config = {
+  path: "/weekly-tasks/:id/toggle"
+};
