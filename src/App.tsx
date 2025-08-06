@@ -47,6 +47,11 @@ function App() {
           distractionsApi.getDistractions(),
           weeklyTasksApi.getWeeklyTasks()
         ]);
+        console.log('📊 Loaded data:', { 
+          distractionsCount: distractionsData.length, 
+          weeklyTasksCount: weeklyTasksData.length,
+          weeklyTasksData 
+        });
         setDistractions(distractionsData);
         setWeeklyTasks(weeklyTasksData);
         setError(null);

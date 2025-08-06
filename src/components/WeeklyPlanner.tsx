@@ -27,6 +27,7 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
   currentWeekStart,
   onWeekChange
 }) => {
+  console.log('🗓️ WeeklyPlanner received tasks:', { count: weeklyTasks.length, tasks: weeklyTasks });
   const [lunchIdeas, setLunchIdeas] = useState<LunchIdea[]>([]);
   const [newLunchIdea, setNewLunchIdea] = useState('');
   const [dailyLunches, setDailyLunches] = useState<Record<string, number | undefined>>({});

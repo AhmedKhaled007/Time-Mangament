@@ -12,6 +12,16 @@
   # Directory for serverless functions (relative to repository root)
   directory = "netlify/functions"
 
+[dev]
+  # Host for Netlify dev server
+  host = "127.0.0.1"
+  # Port for Netlify dev server
+  port = 8888
+  # Port for local development server
+  targetPort = 5173
+  # Auto-launch browser
+  autoLaunch = true
+
 [build.environment]
   # Node.js version
   NODE_VERSION = "22"
