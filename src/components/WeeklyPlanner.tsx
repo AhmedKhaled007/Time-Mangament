@@ -218,7 +218,19 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
 
   // Group weekly tasks by date and sort by completion status then time
   const getTasksForDate = (dateStr: string): WeeklyTask[] => {
-    const tasks = weeklyTasks.filter(task => task.date === dateStr);
+    console.log(`🔍 Filtering tasks for date: ${dateStr}`);
+    console.log('📋 All available tasks:', weeklyTasks.map(t => ({ id: t.id, text: t.text, date: t.date })));
+    
+    const tasks = weeklyTasks.filter(task => {
+      // Normalize both dates to ensure consistent comparison
+      const taskDate = task.date.split('T')[0]; // Remove time portion if present
+      const targetDate = dateStr.split('T')[0]; // Remove time portion if present
+      const matches = taskDate === targetDate;
+      console.log(`  Task ${task.id}: "${taskDate}" === "${targetDate}" = ${matches}`);
+      return matches;
+    });
+    
+    console.log(`✅ Found ${tasks.length} tasks for ${dateStr}:`, tasks.map(t => ({ id: t.id, text: t.text })));
     
     // Sort tasks: incomplete tasks first (by time), then completed tasks (by time)
     return tasks.sort((a, b) => {
