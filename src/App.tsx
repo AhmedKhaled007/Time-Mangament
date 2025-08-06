@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthGuard from './components/AuthGuard';
 import Header from './components/Header';
 import Tabs from './components/Tabs';
@@ -15,7 +15,9 @@ import { useTimer } from './hooks/useTimer';
 import { distractionsApi, weeklyTasksApi } from './services/api';
 import type { Distraction as ApiDistraction, WeeklyTask as ApiWeeklyTask } from './types';
 
-function App() {
+// Main app component that needs auth context
+function AppContent() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('pomodoro');
   const [isTimerMinimized, setIsTimerMinimized] = useState(false);
   
@@ -38,33 +40,55 @@ function App() {
   
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getWeekStart(new Date()));
 
-  // Load data from backend on mount
+  // Load data from backend only when authenticated
   useEffect(() => {
+    if (!isAuthenticated || authLoading) {
+      setLoading(false);
+      return;
+    }
+
     const loadData = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         const [distractionsData, weeklyTasksData] = await Promise.all([
           distractionsApi.getDistractions(),
           weeklyTasksApi.getWeeklyTasks()
         ]);
+        
         console.log('📊 Loaded data:', { 
           distractionsCount: distractionsData.length, 
           weeklyTasksCount: weeklyTasksData.length,
           weeklyTasksData 
         });
+        
         setDistractions(distractionsData);
         setWeeklyTasks(weeklyTasksData);
-        setError(null);
       } catch (err) {
         console.error('Failed to load data:', err);
-        setError('Failed to connect to backend. Please check if the server is running.');
+        
+        // More specific error handling
+        if (err instanceof Error) {
+          if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+            setError('Authentication failed. Please log in again.');
+          } else if (err.message.includes('404')) {
+            setError('API endpoints not found. Please check your configuration.');
+          } else if (err.message.includes('500')) {
+            setError('Server error occurred. Please try again later.');
+          } else {
+            setError(`Failed to load data: ${err.message}`);
+          }
+        } else {
+          setError('Failed to connect to backend. Please check if the server is running.');
+        }
       } finally {
         setLoading(false);
       }
     };
     
     loadData();
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
   // Timer hook
   const timer = useTimer(25, () => {
@@ -204,89 +228,96 @@ function App() {
   }
 
   return (
-    <AuthProvider>
-      <AuthGuard>
-        <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
-          <div className="container mx-auto max-w-7xl bg-white rounded-t-3xl shadow-2xl overflow-hidden">
-            <Header />
-            
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-8 mt-4">
-                <strong className="font-bold">Error: </strong>
-                <span className="block sm:inline">{error}</span>
-                <button 
-                  onClick={() => setError(null)}
-                  className="float-right font-bold text-red-700 hover:text-red-900"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
-            
-            {/* Pomodoro Tab Content */}
-            {activeTab === 'pomodoro' && (
-              <div className="p-8">
-                <div className="mb-8">
-                  <DistractionTracker
-                    distractions={distractions}
-                    onAddDistraction={addDistraction}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <PomodoroTimer
-                    timeLeft={timer.timeLeft}
-                    isRunning={timer.isRunning}
-                    status={timer.status}
-                    onStart={timer.start}
-                    onPause={timer.pause}
-                    onReset={timer.reset}
-                    isMinimized={isTimerMinimized}
-                    onMinimize={handleMinimizeTimer}
-                  />
-                  
-                  <StatsCard
-                    focusSessions={focusSessions}
-                    distractions={distractions}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Weekly Tab Content */}
-            {activeTab === 'weekly' && (
-              <div className="p-8">
-                <WeeklyPlanner
-                  weeklyTasks={weeklyTasks}
-                  onAddWeeklyTask={addWeeklyTask}
-                  onToggleWeeklyTask={toggleWeeklyTask}
-                  onDeleteWeeklyTask={deleteWeeklyTask}
-                  onUpdateWeeklyTask={updateWeeklyTask}
-                  currentWeekStart={currentWeekStart}
-                  onWeekChange={handleWeekChange}
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
+        <div className="container mx-auto max-w-7xl bg-white rounded-t-3xl shadow-2xl overflow-hidden">
+          <Header />
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-8 mt-4">
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{error}</span>
+              <button 
+                onClick={() => setError(null)}
+                className="float-right font-bold text-red-700 hover:text-red-900"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
+          
+          {/* Pomodoro Tab Content */}
+          {activeTab === 'pomodoro' && (
+            <div className="p-8">
+              <div className="mb-8">
+                <DistractionTracker
+                  distractions={distractions}
+                  onAddDistraction={addDistraction}
                 />
               </div>
-            )}
-            
-            {/* Settings Tab Content */}
-            {activeTab === 'settings' && <Settings />}
-          </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <PomodoroTimer
+                  timeLeft={timer.timeLeft}
+                  isRunning={timer.isRunning}
+                  status={timer.status}
+                  onStart={timer.start}
+                  onPause={timer.pause}
+                  onReset={timer.reset}
+                  isMinimized={isTimerMinimized}
+                  onMinimize={handleMinimizeTimer}
+                />
+                
+                <StatsCard
+                  focusSessions={focusSessions}
+                  distractions={distractions}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Weekly Tab Content */}
+          {activeTab === 'weekly' && (
+            <div className="p-8">
+              <WeeklyPlanner
+                weeklyTasks={weeklyTasks}
+                onAddWeeklyTask={addWeeklyTask}
+                onToggleWeeklyTask={toggleWeeklyTask}
+                onDeleteWeeklyTask={deleteWeeklyTask}
+                onUpdateWeeklyTask={updateWeeklyTask}
+                currentWeekStart={currentWeekStart}
+                onWeekChange={handleWeekChange}
+              />
+            </div>
+          )}
           
-          {/* Floating Timer */}
-          <FloatingTimer
-            timeLeft={timer.timeLeft}
-            isRunning={timer.isRunning}
-            status={timer.status}
-            onStart={timer.start}
-            onPause={timer.pause}
-            onReset={timer.reset}
-            onRestore={handleRestoreTimer}
-            onHide={handleHideFloatingTimer}
-            isVisible={isTimerMinimized}
-          />
+          {/* Settings Tab Content */}
+          {activeTab === 'settings' && <Settings />}
         </div>
-      </AuthGuard>
+        
+        {/* Floating Timer */}
+        <FloatingTimer
+          timeLeft={timer.timeLeft}
+          isRunning={timer.isRunning}
+          status={timer.status}
+          onStart={timer.start}
+          onPause={timer.pause}
+          onReset={timer.reset}
+          onRestore={handleRestoreTimer}
+          onHide={handleHideFloatingTimer}
+          isVisible={isTimerMinimized}
+        />
+      </div>
+    </AuthGuard>
+  );
+}
+
+// Main App wrapper with AuthProvider
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
       <Toaster position="top-right" />
     </AuthProvider>
   );
