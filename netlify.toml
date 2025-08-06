@@ -1,6 +1,6 @@
 [build]
   # Directory to change to before starting a build
-  base = "frontend/"
+  base = ""
   
   # Directory that contains the deploy-ready HTML files and assets (relative to base directory)
   publish = "dist/"

@@ -46,9 +46,9 @@ build/
 .env.production.local
 
 # Frontend specific
-frontend/.env.production
-frontend/dist/
-frontend/.netlify/
+.env.production
+dist/
+.netlify/
 
 # Logs
 logs
