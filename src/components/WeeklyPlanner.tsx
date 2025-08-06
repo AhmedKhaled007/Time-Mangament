@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import WeekNavigation from './WeekNavigation';
 import DayCard from './DayCard';
-import type { WeeklyTask, LunchIdea, BreakfastIdea } from '../types';
-import { lunchIdeasApi, breakfastIdeasApi } from '../services/api';
+import type { WeeklyTask, MealIdea, WeeklyMeals, MealType } from '../types';
+import { mealIdeasApi, dailyMealsApi } from '../services/api';
 
 export interface WeeklyTasks {
   [dateStr: string]: WeeklyTask[];
@@ -28,93 +28,42 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
   onWeekChange
 }) => {
   console.log('🗓️ WeeklyPlanner received tasks:', { count: weeklyTasks.length, tasks: weeklyTasks });
-  const [lunchIdeas, setLunchIdeas] = useState<LunchIdea[]>([]);
-  const [newLunchIdea, setNewLunchIdea] = useState('');
-  const [dailyLunches, setDailyLunches] = useState<Record<string, number | undefined>>({});
-  const [breakfastIdeas, setBreakfastIdeas] = useState<BreakfastIdea[]>([]);
-  const [newBreakfastIdea, setNewBreakfastIdea] = useState('');
-  const [dailyBreakfasts, setDailyBreakfasts] = useState<Record<string, number | undefined>>({});
+  const [mealIdeas, setMealIdeas] = useState<MealIdea[]>([]);
+  const [newMealIdea, setNewMealIdea] = useState('');
+  const [newMealType, setNewMealType] = useState<MealType>('lunch');
+  const [weeklyMeals, setWeeklyMeals] = useState<WeeklyMeals>({});
 
-  // Load lunch ideas on component mount
+  // Load meal ideas on component mount
   useEffect(() => {
-    const loadLunchIdeas = async () => {
+    const loadMealIdeas = async () => {
       try {
-        const ideas = await lunchIdeasApi.getLunchIdeas();
-        setLunchIdeas(ideas);
+        const ideas = await mealIdeasApi.getMealIdeas();
+        setMealIdeas(ideas);
       } catch (error) {
-        console.error('Failed to load lunch ideas:', error);
+        console.error('Failed to load meal ideas:', error);
       }
     };
-    loadLunchIdeas();
+    loadMealIdeas();
   }, []);
 
-  // Load breakfast ideas on component mount
+  // Load weekly meals for the current week
   useEffect(() => {
-    const loadBreakfastIdeas = async () => {
-      try {
-        const ideas = await breakfastIdeasApi.getBreakfastIdeas();
-        setBreakfastIdeas(ideas);
-      } catch (error) {
-        console.error('Failed to load breakfast ideas:', error);
-      }
-    };
-    loadBreakfastIdeas();
-  }, []);
-
-  // Load daily lunches for the current week
-  useEffect(() => {
-    const loadDailyLunches = async () => {
+    const loadWeeklyMeals = async () => {
       const weekDays = getWeekDays();
-      const lunches: Record<string, number | undefined> = {};
+      const startDate = formatDate(weekDays[0]);
+      const endDate = formatDate(weekDays[weekDays.length - 1]);
       
       try {
-        await Promise.all(
-          weekDays.map(async (day) => {
-            const dateStr = formatDate(day);
-            try {
-              const dailyLunch = await lunchIdeasApi.getDailyLunch(dateStr);
-              lunches[dateStr] = dailyLunch.lunch_id;
-            } catch (error) {
-              // No lunch selected for this day
-              lunches[dateStr] = undefined;
-            }
-          })
-        );
-        setDailyLunches(lunches);
+        const meals = await dailyMealsApi.getWeeklyMeals(startDate, endDate);
+        setWeeklyMeals(meals);
       } catch (error) {
-        console.error('Failed to load daily lunches:', error);
+        console.error('Failed to load weekly meals:', error);
+        // Initialize empty weekly meals structure on error
+        setWeeklyMeals({});
       }
     };
     
-    loadDailyLunches();
-  }, [currentWeekStart]);
-
-  // Load daily breakfasts for the current week
-  useEffect(() => {
-    const loadDailyBreakfasts = async () => {
-      const weekDays = getWeekDays();
-      const breakfasts: Record<string, number | undefined> = {};
-      
-      try {
-        await Promise.all(
-          weekDays.map(async (day) => {
-            const dateStr = formatDate(day);
-            try {
-              const dailyBreakfast = await breakfastIdeasApi.getDailyBreakfast(dateStr);
-              breakfasts[dateStr] = dailyBreakfast.breakfast_id;
-            } catch (error) {
-              // No breakfast selected for this day
-              breakfasts[dateStr] = undefined;
-            }
-          })
-        );
-        setDailyBreakfasts(breakfasts);
-      } catch (error) {
-        console.error('Failed to load daily breakfasts:', error);
-      }
-    };
-    
-    loadDailyBreakfasts();
+    loadWeeklyMeals();
   }, [currentWeekStart]);
 
   const getWeekDays = () => {
@@ -155,61 +104,70 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
     await onUpdateWeeklyTask(taskId, updatedTask);
   };
 
-  // Lunch Ideas Management
-  const handleAddLunchIdea = async () => {
-    if (!newLunchIdea.trim()) return;
+  // Meal Ideas Management
+  const handleAddMealIdea = async () => {
+    if (!newMealIdea.trim()) return;
     
     try {
-      const newIdea = await lunchIdeasApi.createLunchIdea({ name: newLunchIdea.trim() });
-      setLunchIdeas(prev => [...prev, newIdea]);
-      setNewLunchIdea('');
+      const newIdea = await mealIdeasApi.createMealIdea({ 
+        name: newMealIdea.trim(), 
+        meal_type: newMealType 
+      });
+      setMealIdeas(prev => [...prev, newIdea]);
+      setNewMealIdea('');
     } catch (error) {
-      console.error('Failed to add lunch idea:', error);
+      console.error('Failed to add meal idea:', error);
     }
   };
 
-  const handleDeleteLunchIdea = async (id: number) => {
+  const handleDeleteMealIdea = async (id: number) => {
     try {
-      await lunchIdeasApi.deleteLunchIdea(id);
-      setLunchIdeas(prev => prev.filter(idea => idea.id !== id));
+      await mealIdeasApi.deleteMealIdea(id);
+      setMealIdeas(prev => prev.filter(idea => idea.id !== id));
       
-      // Clear any daily lunch selections using this idea
-      setDailyLunches(prev => {
+      // Clear any daily meal selections using this idea
+      setWeeklyMeals(prev => {
         const updated = { ...prev };
         Object.keys(updated).forEach(date => {
-          if (updated[date] === id) {
-            updated[date] = undefined;
-          }
+          Object.keys(updated[date] || {}).forEach(mealType => {
+            if (updated[date][mealType as MealType]?.meal_id === id) {
+              delete updated[date][mealType as MealType];
+            }
+          });
         });
         return updated;
       });
     } catch (error) {
-      console.error('Failed to delete lunch idea:', error);
+      console.error('Failed to delete meal idea:', error);
     }
   };
 
-  const handleDailyLunchChange = async (date: string, lunchId?: number) => {
+  const handleDailyMealChange = async (date: string, mealType: MealType, mealId?: number) => {
     try {
-      console.log(`Updating lunch for ${date} to lunch ID:`, lunchId);
-      await lunchIdeasApi.updateDailyLunch(date, lunchId);
-      setDailyLunches(prev => ({ ...prev, [date]: lunchId }));
-      console.log(`Successfully updated lunch for ${date}`);
+      console.log(`Updating ${mealType} for ${date} to meal ID:`, mealId);
+      await dailyMealsApi.updateDailyMeal({ date, meal_type: mealType, meal_id: mealId });
+      
+      // Update local state
+      setWeeklyMeals(prev => {
+        const updated = { ...prev };
+        if (!updated[date]) updated[date] = {};
+        
+        if (mealId) {
+          const mealIdea = mealIdeas.find(idea => idea.id === mealId);
+          updated[date][mealType] = {
+            meal_id: mealId,
+            meal_name: mealIdea?.name
+          };
+        } else {
+          delete updated[date][mealType];
+        }
+        
+        return updated;
+      });
+      
+      console.log(`Successfully updated ${mealType} for ${date}`);
     } catch (error) {
-      console.error('Failed to update daily lunch:', error);
-      if (error instanceof Error && 'response' in error) {
-        console.error('API Response:', (error as any).response?.data);
-      }
-    }
-  };
-
-  const handleDailyBreakfastChange = async (date: string, breakfastId?: number) => {
-    try {
-      console.log(`Updating breakfast for ${date} to breakfast ID:`, breakfastId);
-      await breakfastIdeasApi.updateDailyBreakfast(date, breakfastId);
-      setDailyBreakfasts(prev => ({ ...prev, [date]: breakfastId }));
-      console.log(`Successfully updated breakfast for ${date}`);
-    } catch (error) {
-      console.error('Failed to update daily breakfast:', error);
+      console.error(`Failed to update daily ${mealType}:`, error);
       if (error instanceof Error && 'response' in error) {
         console.error('API Response:', (error as any).response?.data);
       }
@@ -255,38 +213,6 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
   const weekDays = getWeekDays();
   const today = new Date();
 
-  // Breakfast Ideas Management
-  const handleAddBreakfastIdea = async () => {
-    if (!newBreakfastIdea.trim()) return;
-    
-    try {
-      const newIdea = await breakfastIdeasApi.createBreakfastIdea({ name: newBreakfastIdea.trim() });
-      setBreakfastIdeas(prev => [...prev, newIdea]);
-      setNewBreakfastIdea('');
-    } catch (error) {
-      console.error('Failed to add breakfast idea:', error);
-    }
-  };
-
-  const handleDeleteBreakfastIdea = async (id: number) => {
-    try {
-      await breakfastIdeasApi.deleteBreakfastIdea(id);
-      setBreakfastIdeas(prev => prev.filter(idea => idea.id !== id));
-      
-      // Clear any daily breakfast selections using this idea
-      setDailyBreakfasts(prev => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach(date => {
-          if (updated[date] === id) {
-            updated[date] = undefined;
-          }
-        });
-        return updated;
-      });
-    } catch (error) {
-      console.error('Failed to delete breakfast idea:', error);
-    }
-  };
 
   return (
     <div className="p-8">
@@ -312,103 +238,90 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
               onToggleTask={(taskId) => toggleTask(taskId)}
               onDeleteTask={(taskId) => deleteTask(taskId)}
               onEditTask={(taskId, task) => editTask(taskId, task)}
-              lunchIdeas={lunchIdeas}
-              selectedLunchId={dailyLunches[dateStr]}
-              onLunchChange={(lunchId) => handleDailyLunchChange(dateStr, lunchId)}
-              breakfastIdeas={breakfastIdeas}
-              selectedBreakfastId={dailyBreakfasts[dateStr]}
-              onBreakfastChange={(breakfastId) => handleDailyBreakfastChange(dateStr, breakfastId)}
+              lunchIdeas={mealIdeas.filter(idea => idea.meal_type === 'lunch')}
+              selectedLunchId={weeklyMeals[dateStr]?.lunch?.meal_id}
+              onLunchChange={(lunchId) => handleDailyMealChange(dateStr, 'lunch', lunchId)}
+              breakfastIdeas={mealIdeas.filter(idea => idea.meal_type === 'breakfast')}
+              selectedBreakfastId={weeklyMeals[dateStr]?.breakfast?.meal_id}
+              onBreakfastChange={(breakfastId) => handleDailyMealChange(dateStr, 'breakfast', breakfastId)}
             />
           );
         })}
       </div>
 
-      {/* Meal Ideas Section */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Breakfast Ideas Section */}
-        <div className="breakfast-ideas-section bg-green-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-4">🥐 Breakfast Ideas</h3>
+      {/* Unified Meal Ideas Section */}
+      <div className="mt-8">
+        <div className="bg-blue-50 p-6 rounded-lg">
+          <h3 className="text-lg font-semibold mb-4">🍽️ Meal Ideas</h3>
           
-          {/* Add New Breakfast Idea */}
-          <div className="flex gap-2 mb-4">
+          {/* Add New Meal Idea */}
+          <div className="flex gap-2 mb-6">
+            <select
+              value={newMealType}
+              onChange={(e) => setNewMealType(e.target.value as MealType)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="breakfast">🥐 Breakfast</option>
+              <option value="lunch">🍽️ Lunch</option>
+              <option value="dinner">🍖 Dinner</option>
+              <option value="snack">🍪 Snack</option>
+            </select>
             <input
               type="text"
-              value={newBreakfastIdea}
-              onChange={(e) => setNewBreakfastIdea(e.target.value)}
-              placeholder="Add a new breakfast idea..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              onKeyPress={(e) => e.key === 'Enter' && handleAddBreakfastIdea()}
+              value={newMealIdea}
+              onChange={(e) => setNewMealIdea(e.target.value)}
+              placeholder="Add a new meal idea..."
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyPress={(e) => e.key === 'Enter' && handleAddMealIdea()}
             />
             <button
-              onClick={handleAddBreakfastIdea}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+              onClick={handleAddMealIdea}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Add
             </button>
           </div>
 
-          {/* Breakfast Ideas List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {breakfastIdeas.map((idea) => (
-              <div key={idea.id} className="flex items-center justify-between bg-white p-2 rounded border">
-                <span className="text-sm">{idea.name}</span>
-                <button
-                  onClick={() => handleDeleteBreakfastIdea(idea.id)}
-                  className="text-red-500 hover:text-red-700 ml-2"
-                  title="Delete breakfast idea"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+          {/* Meal Ideas Lists by Type */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((mealType) => {
+              const typeIdeas = mealIdeas.filter(idea => idea.meal_type === mealType);
+              const mealEmojis = { breakfast: '🥐', lunch: '🍽️', dinner: '🍖', snack: '🍪' };
+              const mealColors = { 
+                breakfast: 'bg-green-50 border-green-200', 
+                lunch: 'bg-yellow-50 border-yellow-200',
+                dinner: 'bg-red-50 border-red-200',
+                snack: 'bg-purple-50 border-purple-200'
+              };
+              
+              return (
+                <div key={mealType} className={`p-4 rounded-lg border ${mealColors[mealType]}`}>
+                  <h4 className="font-medium mb-3 capitalize">
+                    {mealEmojis[mealType]} {mealType} Ideas ({typeIdeas.length})
+                  </h4>
+                  
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {typeIdeas.map((idea) => (
+                      <div key={idea.id} className="flex items-center justify-between bg-white p-2 rounded border">
+                        <span className="text-sm">{idea.name}</span>
+                        <button
+                          onClick={() => handleDeleteMealIdea(idea.id)}
+                          className="text-red-500 hover:text-red-700 ml-2"
+                          title={`Delete ${mealType} idea`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {typeIdeas.length === 0 && (
+                    <p className="text-gray-500 text-sm italic">No {mealType} ideas yet.</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          
-          {breakfastIdeas.length === 0 && (
-            <p className="text-gray-500 text-sm italic">No breakfast ideas yet. Add some ideas above!</p>
-          )}
-        </div>
-
-        {/* Lunch Ideas Section */}
-        <div className="lunch-ideas-section bg-yellow-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-4">🍽️ Lunch Ideas</h3>
-          
-          {/* Add New Lunch Idea */}
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={newLunchIdea}
-              onChange={(e) => setNewLunchIdea(e.target.value)}
-              placeholder="Add a new lunch idea..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              onKeyPress={(e) => e.key === 'Enter' && handleAddLunchIdea()}
-            />
-            <button
-              onClick={handleAddLunchIdea}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            >
-              Add
-            </button>
-          </div>
-
-          {/* Lunch Ideas List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {lunchIdeas.map((idea) => (
-              <div key={idea.id} className="flex items-center justify-between bg-white p-2 rounded border">
-                <span className="text-sm">{idea.name}</span>
-                <button
-                  onClick={() => handleDeleteLunchIdea(idea.id)}
-                  className="text-red-500 hover:text-red-700 ml-2"
-                  title="Delete lunch idea"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          
-          {lunchIdeas.length === 0 && (
-            <p className="text-gray-500 text-sm italic">No lunch ideas yet. Add some ideas above!</p>
-          )}
         </div>
       </div>
     </div>

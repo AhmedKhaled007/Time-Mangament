@@ -67,43 +67,54 @@ export interface WeeklyTaskUpdate {
   breakfast_id?: number;
 }
 
-export interface LunchIdea {
+// Meal Types (replaces LunchIdea and BreakfastIdea)
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+export interface MealIdea {
   id: number;
   name: string;
+  meal_type: MealType;
   created_at: string;
 }
 
-export interface LunchIdeaCreate {
+export interface MealIdeaCreate {
   name: string;
+  meal_type: MealType;
 }
 
-export interface LunchIdeaUpdate {
+export interface MealIdeaUpdate {
   name?: string;
+  meal_type?: MealType;
 }
 
-export interface DailyLunch {
+// Daily Meals (replaces DailyLunch and DailyBreakfast)
+export interface DailyMeal {
   date: string;
-  lunch_id?: number;
+  meal_type: MealType;
+  meal_id?: number;
+  meal_name?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface BreakfastIdea {
-  id: number;
-  name: string;
-  created_at: string;
-}
-
-export interface BreakfastIdeaCreate {
-  name: string;
-}
-
-export interface BreakfastIdeaUpdate {
-  name?: string;
-}
-
-export interface DailyBreakfast {
+export interface DailyMealUpdate {
   date: string;
-  breakfast_id?: number;
+  meal_type: MealType;
+  meal_id?: number;
 }
+
+// Weekly meals structure for easier frontend consumption
+export interface WeeklyMeals {
+  [date: string]: {
+    [mealType in MealType]?: {
+      meal_id?: number;
+      meal_name?: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+  };
+}
+
 
 export interface Distraction {
   id: number;

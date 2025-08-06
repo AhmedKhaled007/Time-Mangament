@@ -7,14 +7,13 @@ import type {
   Distraction,
   DistractionCreate,
   TaskStats,
-  LunchIdea,
-  LunchIdeaCreate,
-  LunchIdeaUpdate,
-  DailyLunch,
-  BreakfastIdea,
-  BreakfastIdeaCreate,
-  BreakfastIdeaUpdate,
-  DailyBreakfast,
+  MealIdea,
+  MealIdeaCreate,
+  MealIdeaUpdate,
+  DailyMeal,
+  DailyMealUpdate,
+  WeeklyMeals,
+  MealType,
 } from '../types';
 
 // Auto-detect API base URL based on environment
@@ -134,58 +133,51 @@ export const obsidianApi = {
   clearSettings: () => Promise.reject(new Error('Obsidian integration not available in serverless mode')),
 };
 
-// Lunch Ideas API
-export const lunchIdeasApi = {
-  // Get all lunch ideas
-  getLunchIdeas: (): Promise<LunchIdea[]> =>
-    api.get('/lunch-ideas').then((response) => response.data),
+// Meal Ideas API (new unified approach)
+export const mealIdeasApi = {
+  // Get meal ideas (optionally filtered by meal type)
+  getMealIdeas: (mealType?: MealType): Promise<MealIdea[]> => {
+    const params = mealType ? { meal_type: mealType } : {};
+    return api.get('/meal-ideas', { params }).then((response) => response.data);
+  },
 
-  // Create new lunch idea
-  createLunchIdea: (lunchIdea: LunchIdeaCreate): Promise<LunchIdea> =>
-    api.post('/lunch-ideas', lunchIdea).then((response) => response.data),
+  // Create new meal idea
+  createMealIdea: (mealIdea: MealIdeaCreate): Promise<MealIdea> =>
+    api.post('/meal-ideas', mealIdea).then((response) => response.data),
 
-  // Update lunch idea
-  updateLunchIdea: (id: number, lunchIdea: LunchIdeaUpdate): Promise<LunchIdea> =>
-    api.put(`/lunch-ideas/${id}`, lunchIdea).then((response) => response.data),
+  // Update meal idea
+  updateMealIdea: (id: number, mealIdea: MealIdeaUpdate): Promise<MealIdea> =>
+    api.put(`/meal-ideas/${id}`, mealIdea).then((response) => response.data),
 
-  // Delete lunch idea
-  deleteLunchIdea: (id: number): Promise<void> =>
-    api.delete(`/lunch-ideas/${id}`).then(() => undefined),
-
-  // Get daily lunch selection
-  getDailyLunch: (date: string): Promise<DailyLunch> =>
-    api.get(`/daily-lunch/${date}`).then((response) => response.data),
-
-  // Update daily lunch selection
-  updateDailyLunch: (date: string, lunchId?: number): Promise<{ message: string; date: string; lunch_id?: number }> =>
-    api.put(`/daily-lunch/${date}`, { lunch_id: lunchId }).then((response) => response.data),
+  // Delete meal idea
+  deleteMealIdea: (id: number): Promise<void> =>
+    api.delete(`/meal-ideas/${id}`).then(() => undefined),
 };
 
-// Breakfast Ideas API
-export const breakfastIdeasApi = {
-  // Get all breakfast ideas
-  getBreakfastIdeas: (): Promise<BreakfastIdea[]> =>
-    api.get('/breakfast-ideas').then((response) => response.data),
+// Daily Meals API (new unified approach)
+export const dailyMealsApi = {
+  // Get daily meals for a specific date
+  getDailyMeals: (date: string, mealType?: MealType): Promise<DailyMeal[]> => {
+    const params: any = { date };
+    if (mealType) params.meal_type = mealType;
+    return api.get('/daily-meals', { params }).then((response) => response.data);
+  },
 
-  // Create new breakfast idea
-  createBreakfastIdea: (breakfastIdea: BreakfastIdeaCreate): Promise<BreakfastIdea> =>
-    api.post('/breakfast-ideas', breakfastIdea).then((response) => response.data),
+  // Get weekly meals (returns grouped structure)
+  getWeeklyMeals: (startDate: string, endDate: string, mealType?: MealType): Promise<WeeklyMeals> => {
+    const params: any = { start_date: startDate, end_date: endDate };
+    if (mealType) params.meal_type = mealType;
+    return api.get('/daily-meals', { params }).then((response) => response.data);
+  },
 
-  // Update breakfast idea
-  updateBreakfastIdea: (id: number, breakfastIdea: BreakfastIdeaUpdate): Promise<BreakfastIdea> =>
-    api.put(`/breakfast-ideas/${id}`, breakfastIdea).then((response) => response.data),
+  // Update daily meal selection
+  updateDailyMeal: (dailyMeal: DailyMealUpdate): Promise<{ message: string; date: string; meal_type: string; meal_id?: number }> =>
+    api.put('/daily-meals', dailyMeal).then((response) => response.data),
 
-  // Delete breakfast idea
-  deleteBreakfastIdea: (id: number): Promise<void> =>
-    api.delete(`/breakfast-ideas/${id}`).then(() => undefined),
-
-  // Get daily breakfast selection
-  getDailyBreakfast: (date: string): Promise<DailyBreakfast> =>
-    api.get(`/daily-breakfast/${date}`).then((response) => response.data),
-
-  // Update daily breakfast selection
-  updateDailyBreakfast: (date: string, breakfastId?: number): Promise<{ message: string; date: string; breakfast_id?: number }> =>
-    api.put(`/daily-breakfast/${date}`, { breakfast_id: breakfastId }).then((response) => response.data),
+  // Remove daily meal selection
+  removeDailyMeal: (date: string, mealType: MealType): Promise<{ message: string }> =>
+    api.delete('/daily-meals', { data: { date, meal_type: mealType } }).then((response) => response.data),
 };
+
 
 export default api;
