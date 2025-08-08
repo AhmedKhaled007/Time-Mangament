@@ -292,38 +292,38 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
 
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-4">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4 sm:gap-0">
         <WeekNavigation
           currentWeekStart={currentWeekStart}
           onWeekChange={onWeekChange}
         />
         
         {/* Control Buttons */}
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {isPopulating && (
-            <span className="text-xs text-blue-600 font-medium">
+            <span className="text-xs text-blue-600 font-medium whitespace-nowrap">
               🔄 Populating tasks...
             </span>
           )}
           <button
             onClick={handlePopulateRecurringTasks}
             disabled={isPopulating}
-            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400"
+            className="px-3 py-2 text-xs bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400 min-h-[36px] touch-manipulation"
             title="Populate recurring tasks for this week"
           >
             🔄 Populate
           </button>
           <button
             onClick={handleMigrateDatabase}
-            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[36px] touch-manipulation"
             title="Run database migration (for debugging/testing)"
           >
             🔧 Migrate DB
           </button>
           <button
             onClick={handleClearAllTasks}
-            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 text-xs bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[36px] touch-manipulation"
             title="Clear all tasks (for debugging/testing)"
           >
             🗑️ Clear All
@@ -331,7 +331,7 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mt-6">
         {weekDays.map((date) => {
           const dateStr = formatDate(date);
           const isToday = formatDate(today) === dateStr;
@@ -360,16 +360,16 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
       </div>
 
       {/* Unified Meal Ideas Section */}
-      <div className="mt-8">
-        <div className="bg-blue-50 p-6 rounded-lg">
+      <div className="mt-6 sm:mt-8">
+        <div className="bg-blue-50 p-4 sm:p-6 rounded-lg">
           <h3 className="text-lg font-semibold mb-4">🍽️ Meal Ideas</h3>
           
           {/* Add New Meal Idea */}
-          <div className="flex gap-2 mb-6">
+          <div className="flex flex-col sm:flex-row gap-2 mb-6">
             <select
               value={newMealType}
               onChange={(e) => setNewMealType(e.target.value as MealType)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] touch-manipulation"
             >
               <option value="breakfast">🥐 Breakfast</option>
               <option value="lunch">🍽️ Lunch</option>
@@ -381,19 +381,19 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
               value={newMealIdea}
               onChange={(e) => setNewMealIdea(e.target.value)}
               placeholder="Add a new meal idea..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] touch-manipulation"
               onKeyPress={(e) => e.key === 'Enter' && handleAddMealIdea()}
             />
             <button
               onClick={handleAddMealIdea}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] touch-manipulation"
             >
               Add
             </button>
           </div>
 
           {/* Meal Ideas Lists by Type */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map((mealType) => {
               const typeIdeas = mealIdeas.filter(idea => idea.meal_type === mealType);
               const mealEmojis = { breakfast: '🥐', lunch: '🍽️', dinner: '🍖', snack: '🍪' };

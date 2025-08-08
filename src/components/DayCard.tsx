@@ -93,11 +93,11 @@ const DayCard: React.FC<DayCardProps> = ({
         
         {/* Breakfast Selection */}
         <div className="breakfast-selection mb-3 flex items-center gap-2">
-          <span className="text-lg">🥐</span>
+          <span className="text-lg flex-shrink-0">🥐</span>
           <select
             value={selectedBreakfastId || ''}
             onChange={(e) => onBreakfastChange(e.target.value ? parseInt(e.target.value) : undefined)}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="flex-1 px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[40px] touch-manipulation"
           >
             <option value="">No breakfast selected</option>
             {breakfastIdeas.map((idea) => (
@@ -110,11 +110,11 @@ const DayCard: React.FC<DayCardProps> = ({
         
         {/* Lunch Selection */}
         <div className="lunch-selection mb-4 flex items-center gap-2">
-          <span className="text-lg">🍽️</span>
+          <span className="text-lg flex-shrink-0">🍽️</span>
           <select
             value={selectedLunchId || ''}
             onChange={(e) => onLunchChange(e.target.value ? parseInt(e.target.value) : undefined)}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            className="flex-1 px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 min-h-[40px] touch-manipulation"
           >
             <option value="">No lunch selected</option>
             {lunchIdeas.map((idea) => (
@@ -141,9 +141,9 @@ const DayCard: React.FC<DayCardProps> = ({
                 onClick={() => onToggleTask(task.id)}
                 onContextMenu={(e) => handleContextMenu(e, task.id)}
               >
-                <div className="flex items-start gap-3 p-3">
+                <div className="flex items-start gap-3 p-3 min-h-[44px]">
                   {/* Checkbox */}
-                  <div className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center ${
+                  <div className={`flex-shrink-0 w-6 h-6 mt-0.5 rounded border-2 flex items-center justify-center touch-manipulation ${
                     task.completed 
                       ? 'bg-green-500 border-green-500' 
                       : 'border-gray-300 group-hover:border-blue-500'
@@ -175,7 +175,7 @@ const DayCard: React.FC<DayCardProps> = ({
                   
                   {/* Menu indicator - clickable 3 dots */}
                   <div 
-                    className={`flex-shrink-0 transition-opacity p-1 hover:bg-gray-200 rounded cursor-pointer ${
+                    className={`flex-shrink-0 transition-opacity p-2 hover:bg-gray-200 rounded cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation ${
                       task.completed 
                         ? 'opacity-30 group-hover:opacity-50' 
                         : 'opacity-60 group-hover:opacity-100'
@@ -186,7 +186,7 @@ const DayCard: React.FC<DayCardProps> = ({
                     }}
                     title="Task options"
                   >
-                    <svg className="w-4 h-4 text-gray-400 hover:text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
                     </svg>
                   </div>
@@ -207,9 +207,9 @@ const DayCard: React.FC<DayCardProps> = ({
         
         <button
           onClick={() => setShowAddModal(true)}
-          className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-medium"
+          className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-medium min-h-[44px] touch-manipulation"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
           Add Task
@@ -219,22 +219,22 @@ const DayCard: React.FC<DayCardProps> = ({
       {/* Context Menu */}
       {contextMenu?.visible && (
         <div
-          className="fixed bg-white border border-gray-300 rounded-lg shadow-lg py-1 min-w-[140px]"
+          className="fixed bg-white border border-gray-300 rounded-lg shadow-lg py-1 min-w-[160px]"
           style={{
-            left: contextMenu.x,
-            top: contextMenu.y,
+            left: Math.min(contextMenu.x, window.innerWidth - 180),
+            top: Math.min(contextMenu.y, window.innerHeight - 100),
             zIndex: 1000
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+            className="px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2 min-h-[44px] touch-manipulation"
             onClick={() => handleEdit(contextMenu.taskId)}
           >
             ✏️ Edit Task
           </div>
           <div
-            className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer flex items-center gap-2"
+            className="px-4 py-3 text-sm text-red-600 hover:bg-red-50 cursor-pointer flex items-center gap-2 min-h-[44px] touch-manipulation"
             onClick={() => handleDelete(contextMenu.taskId)}
           >
             🗑️ Delete Task

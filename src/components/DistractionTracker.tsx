@@ -35,10 +35,10 @@ const DistractionTracker: React.FC<DistractionTrackerProps> = ({
           value={distractionText}
           onChange={(e) => setDistractionText(e.target.value)}
           placeholder="What distracted you?"
-          className="input-field mb-4"
+          className="input-field mb-4 min-h-[44px] touch-manipulation"
         />
         <div className="text-center">
-          <button type="submit" className="btn-primary">
+          <button type="submit" className="btn-primary min-h-[44px] touch-manipulation">
             Log Distraction
           </button>
         </div>

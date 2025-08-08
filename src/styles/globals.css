@@ -19,19 +19,19 @@
   }
   
   .btn-primary {
-    @apply bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 min-h-[44px] touch-manipulation;
   }
   
   .btn-secondary {
-    @apply bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 hover:-translate-y-0.5 border border-white/20;
+    @apply bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 hover:-translate-y-0.5 border border-white/20 min-h-[44px] touch-manipulation;
   }
   
   .input-field {
-    @apply w-full px-4 py-3 bg-white/90 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+    @apply w-full px-4 py-3 bg-white/90 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 min-h-[44px] touch-manipulation;
   }
   
   .floating-timer {
-    @apply fixed top-5 right-5 bg-gradient-to-br from-pink-400 to-pink-500 rounded-2xl p-4 shadow-2xl z-50 cursor-move select-none min-w-[200px] border border-white/30;
+    @apply fixed top-2 right-2 sm:top-5 sm:right-5 bg-gradient-to-br from-pink-400 to-pink-500 rounded-2xl p-2 sm:p-4 shadow-2xl z-50 cursor-move select-none min-w-[180px] sm:min-w-[200px] border border-white/30;
   }
   
   .timer-display {
@@ -67,11 +67,15 @@
   }
   
   .day-card {
-    @apply bg-white/80 rounded-xl p-4 min-h-[200px] border border-white/20 transition-all duration-300 hover:bg-white/90 hover:shadow-lg;
+    @apply bg-white/80 rounded-xl p-3 sm:p-4 min-h-[200px] border border-white/20 transition-all duration-300 hover:bg-white/90 hover:shadow-lg;
   }
   
   .day-card.today {
     @apply bg-primary-50/80 border-primary-300 shadow-lg;
+  }
+  
+  .day-header {
+    @apply font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200 text-sm sm:text-base;
   }
   
   .notification-success {
@@ -84,6 +88,26 @@
   
   .notification-info {
     @apply bg-blue-500 text-white p-4 rounded-lg shadow-lg;
+  }
+  
+  .floating-timer-header {
+    @apply flex justify-between items-center mb-2 text-white;
+  }
+  
+  .floating-timer-btn {
+    @apply bg-white/20 hover:bg-white/30 text-white rounded p-1 transition-colors duration-200 text-xs border border-white/30 touch-manipulation;
+  }
+  
+  .floating-timer-action {
+    @apply bg-white/20 hover:bg-white/30 text-white rounded p-2 transition-colors duration-200 border border-white/30 disabled:opacity-50 touch-manipulation;
+  }
+  
+  .floating-timer-display {
+    @apply text-white font-mono font-bold text-center;
+  }
+  
+  .floating-timer-status {
+    @apply text-white/80;
   }
 }
 

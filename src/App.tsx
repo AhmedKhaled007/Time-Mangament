@@ -234,16 +234,16 @@ function AppContent() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
-        <div className="container mx-auto max-w-7xl bg-white rounded-t-3xl shadow-2xl overflow-hidden">
+        <div className="container mx-auto max-w-7xl bg-white sm:rounded-t-3xl shadow-2xl overflow-hidden">
           <Header />
           
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-8 mt-4">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-4 sm:mx-6 lg:mx-8 mt-4">
               <strong className="font-bold">Error: </strong>
               <span className="block sm:inline">{error}</span>
               <button 
                 onClick={() => setError(null)}
-                className="float-right font-bold text-red-700 hover:text-red-900"
+                className="float-right font-bold text-red-700 hover:text-red-900 min-w-[24px] min-h-[24px] touch-manipulation"
               >
                 ×
               </button>
@@ -253,15 +253,15 @@ function AppContent() {
           
           {/* Pomodoro Tab Content */}
           {activeTab === 'pomodoro' && (
-            <div className="p-8">
-              <div className="mb-8">
+            <div className="p-4 sm:p-6 lg:p-8">
+              <div className="mb-6 sm:mb-8">
                 <DistractionTracker
                   distractions={distractions}
                   onAddDistraction={addDistraction}
                 />
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                 <PomodoroTimer
                   timeLeft={timer.timeLeft}
                   isRunning={timer.isRunning}
@@ -283,18 +283,16 @@ function AppContent() {
 
           {/* Weekly Tab Content */}
           {activeTab === 'weekly' && (
-            <div className="p-8">
-              <WeeklyPlanner
-                weeklyTasks={weeklyTasks}
-                onAddWeeklyTask={addWeeklyTask}
-                onToggleWeeklyTask={toggleWeeklyTask}
-                onDeleteWeeklyTask={deleteWeeklyTask}
-                onUpdateWeeklyTask={updateWeeklyTask}
-                currentWeekStart={currentWeekStart}
-                onWeekChange={handleWeekChange}
-                onTasksPopulated={refreshWeeklyTasks}
-              />
-            </div>
+            <WeeklyPlanner
+              weeklyTasks={weeklyTasks}
+              onAddWeeklyTask={addWeeklyTask}
+              onToggleWeeklyTask={toggleWeeklyTask}
+              onDeleteWeeklyTask={deleteWeeklyTask}
+              onUpdateWeeklyTask={updateWeeklyTask}
+              currentWeekStart={currentWeekStart}
+              onWeekChange={handleWeekChange}
+              onTasksPopulated={refreshWeeklyTasks}
+            />
           )}
           
           

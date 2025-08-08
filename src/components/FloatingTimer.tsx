@@ -218,12 +218,12 @@ const FloatingTimer: React.FC<FloatingTimerProps> = ({
       }}
       onMouseDown={handleMouseDown}
     >
-      <div className="floating-timer-header draggable">
-        <div className="floating-timer-title draggable">⏰ Focus Timer</div>
+      <div className="floating-timer-header draggable p-2">
+        <div className="floating-timer-title draggable text-sm font-semibold">⏰ Focus Timer</div>
         <div className="flex gap-1">
           <button
             onClick={togglePictureInPicture}
-            className="floating-timer-btn"
+            className="floating-timer-btn min-w-[32px] min-h-[32px] touch-manipulation"
             title={isPictureInPicture ? "Exit Picture-in-Picture" : "Picture-in-Picture (Chrome/Edge)"}
           >
             📺
@@ -239,44 +239,44 @@ const FloatingTimer: React.FC<FloatingTimerProps> = ({
           />
           <button
             onClick={onRestore}
-            className="floating-timer-btn"
+            className="floating-timer-btn min-w-[32px] min-h-[32px] touch-manipulation"
             title="Restore"
           >
             🔍
           </button>
           <button
             onClick={onHide}
-            className="floating-timer-btn"
+            className="floating-timer-btn min-w-[32px] min-h-[32px] touch-manipulation"
             title="Hide"
           >
             ✕
           </button>
         </div>
       </div>
-      <div className="floating-timer-display draggable">
+      <div className="floating-timer-display draggable text-xl sm:text-2xl font-bold text-center py-2">
         {formatTime(timeLeft)}
       </div>
-      <div className="floating-timer-status draggable text-center text-sm mb-3">
+      <div className="floating-timer-status draggable text-center text-xs sm:text-sm mb-2">
         {status}
       </div>
-      <div className="flex gap-1 justify-center">
+      <div className="flex gap-1 justify-center px-2">
         <button
           onClick={onStart}
           disabled={isRunning}
-          className="floating-timer-action"
+          className="floating-timer-action min-w-[36px] min-h-[36px] touch-manipulation"
         >
           ▶️
         </button>
         <button
           onClick={onPause}
           disabled={!isRunning}
-          className="floating-timer-action"
+          className="floating-timer-action min-w-[36px] min-h-[36px] touch-manipulation"
         >
           ⏸️
         </button>
         <button
           onClick={onReset}
-          className="floating-timer-action"
+          className="floating-timer-action min-w-[36px] min-h-[36px] touch-manipulation"
         >
           🔄
         </button>

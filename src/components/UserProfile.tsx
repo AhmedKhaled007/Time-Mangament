@@ -20,26 +20,26 @@ const UserProfile: React.FC = () => {
     <div className="relative">
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+        className="flex items-center space-x-2 p-3 rounded-lg hover:bg-white/10 transition-colors duration-200 min-h-[44px] touch-manipulation"
       >
         {user.picture ? (
           <img
             src={user.picture}
             alt={user.name}
-            className="w-8 h-8 rounded-full"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-            <User size={16} className="text-gray-600" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 flex items-center justify-center">
+            <User size={16} className="text-white" />
           </div>
         )}
-        <div className="hidden md:block text-left">
-          <p className="text-sm font-medium text-gray-900">{user.name}</p>
-          <p className="text-xs text-gray-500">{user.email}</p>
+        <div className="hidden sm:block text-left">
+          <p className="text-sm font-medium text-white">{user.name}</p>
+          <p className="text-xs text-white/80">{user.email}</p>
         </div>
         <ChevronDown 
           size={16} 
-          className={`text-gray-500 transition-transform duration-200 ${
+          className={`text-white/80 transition-transform duration-200 ${
             isDropdownOpen ? 'rotate-180' : ''
           }`} 
         />
@@ -54,7 +54,7 @@ const UserProfile: React.FC = () => {
           />
           
           {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+          <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-20 max-w-[calc(100vw-2rem)] mr-2 sm:mr-0">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center space-x-3">
                 {user.picture ? (
