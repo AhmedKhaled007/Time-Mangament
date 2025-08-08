@@ -12,7 +12,6 @@ import type {
   MealIdeaUpdate,
   DailyMeal,
   DailyMealUpdate,
-  WeeklyMeals,
   MealType,
   RecurringTask,
   RecurringTaskCreate,
@@ -178,8 +177,8 @@ export const dailyMealsApi = {
     return api.get('/daily-meals', { params }).then((response) => response.data);
   },
 
-  // Get weekly meals (returns grouped structure)
-  getWeeklyMeals: (startDate: string, endDate: string, mealType?: MealType): Promise<WeeklyMeals> => {
+  // Get weekly meals (returns raw data, frontend handles grouping)
+  getWeeklyMeals: (startDate: string, endDate: string, mealType?: MealType): Promise<DailyMeal[]> => {
     const params: any = { start_date: startDate, end_date: endDate };
     if (mealType) params.meal_type = mealType;
     return api.get('/daily-meals', { params }).then((response) => response.data);

@@ -1,8 +1,7 @@
-import type { Context } from '@netlify/functions';
 import { createDbClient, handleDbError, createJsonResponse } from './lib/db';
 import { withAuth, type AuthContext } from './lib/auth';
 
-const handleDailyMeals = async (request: Request, auth: AuthContext, context: Context) => {
+const handleDailyMeals = async (request: Request, auth: AuthContext) => {
   const sql = createDbClient();
   
   try {
@@ -16,23 +15,14 @@ const handleDailyMeals = async (request: Request, auth: AuthContext, context: Co
       const date = url.searchParams.get('date');
       const mealType = url.searchParams.get('meal_type');
       
-      let result;
+      let result: any[];
       
       if (startDate && endDate) {
         // Get meals for a week range
-        let query = sql`
-          SELECT dm.date, dm.meal_type, dm.meal_id, mi.name as meal_name,
-                 dm.created_at, dm.updated_at
-          FROM daily_meals dm
-          LEFT JOIN meal_ideas mi ON dm.meal_id = mi.id
-          WHERE dm.user_id = ${auth.userId} 
-            AND dm.date >= ${startDate} 
-            AND dm.date <= ${endDate}
-        `;
-        
+        let query: any
         if (mealType) {
           query = sql`
-            SELECT dm.date, dm.meal_type, dm.meal_id, mi.name as meal_name,
+            SELECT dm.date::text as date, dm.meal_type, dm.meal_id, mi.name as meal_name,
                    dm.created_at, dm.updated_at
             FROM daily_meals dm
             LEFT JOIN meal_ideas mi ON dm.meal_id = mi.id
@@ -42,29 +32,28 @@ const handleDailyMeals = async (request: Request, auth: AuthContext, context: Co
               AND dm.meal_type = ${mealType}
           `;
         }
+        else {
+          query = sql`
+          SELECT dm.date::text as date, dm.meal_type, dm.meal_id, mi.name as meal_name,
+                 dm.created_at, dm.updated_at
+          FROM daily_meals dm
+          LEFT JOIN meal_ideas mi ON dm.meal_id = mi.id
+          WHERE dm.user_id = ${auth.userId} 
+            AND dm.date >= ${startDate} 
+            AND dm.date <= ${endDate}
+        `;
+        
+        }
         
         result = await query;
         
-        // Group by date for easier frontend consumption
-        const groupedMeals: Record<string, Record<string, any>> = {};
-        result.forEach((meal: any) => {
-          if (!groupedMeals[meal.date]) {
-            groupedMeals[meal.date] = {};
-          }
-          groupedMeals[meal.date][meal.meal_type] = {
-            meal_id: meal.meal_id,
-            meal_name: meal.meal_name,
-            created_at: meal.created_at,
-            updated_at: meal.updated_at
-          };
-        });
-        
-        return createJsonResponse(groupedMeals);
+        // Return raw data, let frontend handle grouping
+        return createJsonResponse(result);
         
       } else if (date) {
         // Get meals for a specific date
         let query = sql`
-          SELECT dm.date, dm.meal_type, dm.meal_id, mi.name as meal_name,
+          SELECT dm.date::text as date, dm.meal_type, dm.meal_id, mi.name as meal_name,
                  dm.created_at, dm.updated_at
           FROM daily_meals dm
           LEFT JOIN meal_ideas mi ON dm.meal_id = mi.id
@@ -73,7 +62,7 @@ const handleDailyMeals = async (request: Request, auth: AuthContext, context: Co
         
         if (mealType) {
           query = sql`
-            SELECT dm.date, dm.meal_type, dm.meal_id, mi.name as meal_name,
+            SELECT dm.date::text as date, dm.meal_type, dm.meal_id, mi.name as meal_name,
                    dm.created_at, dm.updated_at
             FROM daily_meals dm
             LEFT JOIN meal_ideas mi ON dm.meal_id = mi.id
@@ -116,10 +105,13 @@ const handleDailyMeals = async (request: Request, auth: AuthContext, context: Co
         }
       }
       
+      // Normalize date to YYYY-MM-DD format (remove time if present)
+      const normalizedDate = date.split('T')[0];
+      
       // Upsert the daily meal selection
       const result = await sql`
         INSERT INTO daily_meals (user_id, date, meal_type, meal_id)
-        VALUES (${auth.userId}, ${date}, ${meal_type}, ${meal_id})
+        VALUES (${auth.userId}, ${normalizedDate}, ${meal_type}, ${meal_id})
         ON CONFLICT (user_id, date, meal_type)
         DO UPDATE SET meal_id = EXCLUDED.meal_id, updated_at = CURRENT_TIMESTAMP
         RETURNING date, meal_type, meal_id
@@ -142,9 +134,12 @@ const handleDailyMeals = async (request: Request, auth: AuthContext, context: Co
         return createJsonResponse({ error: 'Date and meal_type are required' }, 400);
       }
       
+      // Normalize date to YYYY-MM-DD format (remove time if present)
+      const normalizedDate = date.split('T')[0];
+      
       const result = await sql`
         DELETE FROM daily_meals 
-        WHERE user_id = ${auth.userId} AND date = ${date} AND meal_type = ${meal_type}
+        WHERE user_id = ${auth.userId} AND date = ${normalizedDate} AND meal_type = ${meal_type}
         RETURNING date, meal_type
       `;
       
