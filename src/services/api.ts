@@ -14,6 +14,11 @@ import type {
   DailyMealUpdate,
   WeeklyMeals,
   MealType,
+  RecurringTask,
+  RecurringTaskCreate,
+  RecurringTaskUpdate,
+  PopulateRecurringTasksRequest,
+  PopulateRecurringTasksResponse,
 } from '../types';
 
 // Auto-detect API base URL based on environment
@@ -94,6 +99,7 @@ export const weeklyTasksApi = {
     return api.get('/weekly-tasks', { params }).then((response) => response.data);
   },
 
+
   // Create new weekly task
   createWeeklyTask: (task: WeeklyTaskCreate): Promise<WeeklyTask> =>
     api.post('/weekly-tasks', task).then((response) => response.data),
@@ -109,6 +115,15 @@ export const weeklyTasksApi = {
   // Delete weekly task
   deleteWeeklyTask: (id: number): Promise<void> =>
     api.delete(`/weekly-tasks/${id}`).then(() => undefined),
+
+  // Clear all tasks (for debugging/testing)
+  clearAllTasks: (): Promise<{ message: string; total_deleted: number }> =>
+    api.delete('/clear-all-tasks').then((response) => response.data),
+
+  // Migrate database schema (for debugging/testing)
+  migrateDatabase: (): Promise<{ message: string; status: string }> =>
+    api.post('/migrate-db').then((response) => response.data),
+
 };
 
 // Distractions API
@@ -179,5 +194,27 @@ export const dailyMealsApi = {
     api.delete('/daily-meals', { data: { date, meal_type: mealType } }).then((response) => response.data),
 };
 
+// Recurring Tasks API
+export const recurringTasksApi = {
+  // Get all recurring tasks
+  getRecurringTasks: (): Promise<RecurringTask[]> =>
+    api.get('/recurring-tasks').then((response) => response.data),
+
+  // Create new recurring task
+  createRecurringTask: (task: RecurringTaskCreate): Promise<RecurringTask> =>
+    api.post('/recurring-tasks', task).then((response) => response.data),
+
+  // Update recurring task
+  updateRecurringTask: (id: number, task: RecurringTaskUpdate): Promise<RecurringTask> =>
+    api.put(`/recurring-tasks/${id}`, task).then((response) => response.data),
+
+  // Delete recurring task
+  deleteRecurringTask: (id: number): Promise<void> =>
+    api.delete(`/recurring-tasks/${id}`).then(() => undefined),
+
+  // Populate recurring tasks for a date range
+  populateRecurringTasks: (request: PopulateRecurringTasksRequest): Promise<PopulateRecurringTasksResponse> =>
+    api.post('/populate-recurring-tasks', request).then((response) => response.data),
+};
 
 export default api;

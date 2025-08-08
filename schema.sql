@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS weekly_tasks (
     ticktick_id VARCHAR(100),
     project_id VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, text, date, from_time, to_time)
 );
 
 -- Distractions Table
@@ -58,6 +59,23 @@ CREATE TABLE IF NOT EXISTS daily_meals (
     UNIQUE(user_id, date, meal_type)
 );
 
+-- Recurring Tasks Table
+CREATE TABLE IF NOT EXISTS recurring_tasks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    text VARCHAR(500) NOT NULL,
+    from_time TIME,
+    to_time TIME,
+    priority VARCHAR(10) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+    category VARCHAR(100),
+    weekdays INTEGER[] NOT NULL DEFAULT '{}', -- Array of weekday numbers (0=Sunday, 1=Monday, etc.)
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -70,6 +88,8 @@ CREATE INDEX IF NOT EXISTS idx_meal_ideas_user_id ON meal_ideas(user_id);
 CREATE INDEX IF NOT EXISTS idx_meal_ideas_user_type ON meal_ideas(user_id, meal_type);
 CREATE INDEX IF NOT EXISTS idx_daily_meals_user_date ON daily_meals(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_daily_meals_user_date_type ON daily_meals(user_id, date, meal_type);
+CREATE INDEX IF NOT EXISTS idx_recurring_tasks_user_id ON recurring_tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_recurring_tasks_active ON recurring_tasks(user_id, is_active);
 
 -- Add triggers to update updated_at columns
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -87,4 +107,7 @@ CREATE TRIGGER update_daily_meals_updated_at BEFORE UPDATE ON daily_meals
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_recurring_tasks_updated_at BEFORE UPDATE ON recurring_tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

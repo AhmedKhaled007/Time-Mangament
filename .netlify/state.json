@@ -1,3 +1,20 @@
 {
-	"siteId": "cd621b29-4ee6-45d9-b0ce-905209ad0e06"
+	"siteId": "cd621b29-4ee6-45d9-b0ce-905209ad0e06",
+	"geolocation": {
+		"data": {
+			"city": "Cairo",
+			"country": {
+				"code": "EG",
+				"name": "Egypt"
+			},
+			"subdivision": {
+				"code": "C",
+				"name": "Cairo Governorate"
+			},
+			"timezone": "Africa/Cairo",
+			"latitude": 30.0507,
+			"longitude": 31.2489
+		},
+		"timestamp": 1754573980713
+	}
 }

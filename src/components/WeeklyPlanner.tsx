@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import WeekNavigation from './WeekNavigation';
 import DayCard from './DayCard';
 import type { WeeklyTask, MealIdea, WeeklyMeals, MealType } from '../types';
-import { mealIdeasApi, dailyMealsApi } from '../services/api';
+import { mealIdeasApi, dailyMealsApi, recurringTasksApi, weeklyTasksApi } from '../services/api';
+import RecurringTasks from './RecurringTasks';
 
 export interface WeeklyTasks {
   [dateStr: string]: WeeklyTask[];
@@ -16,6 +17,7 @@ interface WeeklyPlannerProps {
   onUpdateWeeklyTask: (id: number, task: Partial<WeeklyTask>) => Promise<void>;
   currentWeekStart: Date;
   onWeekChange: (direction: number) => Promise<void>;
+  onTasksPopulated?: () => Promise<void>; // Callback to refresh tasks after population
 }
 
 const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
@@ -25,13 +27,15 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
   onDeleteWeeklyTask,
   onUpdateWeeklyTask,
   currentWeekStart,
-  onWeekChange
+  onWeekChange,
+  onTasksPopulated
 }) => {
   console.log('🗓️ WeeklyPlanner received tasks:', { count: weeklyTasks.length, tasks: weeklyTasks });
   const [mealIdeas, setMealIdeas] = useState<MealIdea[]>([]);
   const [newMealIdea, setNewMealIdea] = useState('');
   const [newMealType, setNewMealType] = useState<MealType>('lunch');
   const [weeklyMeals, setWeeklyMeals] = useState<WeeklyMeals>({});
+  const [isPopulating, setIsPopulating] = useState(false);
 
   // Load meal ideas on component mount
   useEffect(() => {
@@ -45,8 +49,7 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
     };
     loadMealIdeas();
   }, []);
-
-  // Load weekly meals for the current week
+  // Load all data in batch to reduce API calls
   useEffect(() => {
     const loadWeeklyMeals = async () => {
       const weekDays = getWeekDays();
@@ -56,6 +59,18 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
       try {
         const meals = await dailyMealsApi.getWeeklyMeals(startDate, endDate);
         setWeeklyMeals(meals);
+
+        // Always auto-populate recurring tasks for current week
+        const today = new Date();
+        const isCurrentWeek = weekDays.some(day => 
+          formatDate(day) === formatDate(today)
+        );
+        if (isCurrentWeek ) {
+          await handlePopulateRecurringTasks();
+        }
+        
+        
+        // Don't auto-populate - user will click button when needed
       } catch (error) {
         console.error('Failed to load weekly meals:', error);
         // Initialize empty weekly meals structure on error
@@ -176,19 +191,12 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
 
   // Group weekly tasks by date and sort by completion status then time
   const getTasksForDate = (dateStr: string): WeeklyTask[] => {
-    console.log(`🔍 Filtering tasks for date: ${dateStr}`);
-    console.log('📋 All available tasks:', weeklyTasks.map(t => ({ id: t.id, text: t.text, date: t.date })));
-    
     const tasks = weeklyTasks.filter(task => {
       // Normalize both dates to ensure consistent comparison
       const taskDate = task.date.split('T')[0]; // Remove time portion if present
       const targetDate = dateStr.split('T')[0]; // Remove time portion if present
-      const matches = taskDate === targetDate;
-      console.log(`  Task ${task.id}: "${taskDate}" === "${targetDate}" = ${matches}`);
-      return matches;
+      return taskDate === targetDate;
     });
-    
-    console.log(`✅ Found ${tasks.length} tasks for ${dateStr}:`, tasks.map(t => ({ id: t.id, text: t.text })));
     
     // Sort tasks: incomplete tasks first (by time), then completed tasks (by time)
     return tasks.sort((a, b) => {
@@ -210,16 +218,118 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
     });
   };
 
+  // Clear all tasks (for debugging/testing)
+  const handleClearAllTasks = async () => {
+    if (!confirm('⚠️ This will delete ALL your weekly and recurring tasks. This cannot be undone. Are you sure?')) {
+      return;
+    }
+    
+    try {
+      console.log('🗑️ Clearing all tasks...');
+      const result = await weeklyTasksApi.clearAllTasks();
+      console.log('✅ Clear result:', result);
+      
+      // Refresh the page data
+      if (onTasksPopulated) {
+        await onTasksPopulated();
+      }
+      
+      // Reload local data
+      setMealIdeas([]);
+      setWeeklyMeals({});
+      
+      alert(`✅ Successfully cleared ${result.total_deleted} tasks`);
+    } catch (error) {
+      console.error('❌ Failed to clear tasks:', error);
+      alert('❌ Failed to clear tasks. Check console for details.');
+    }
+  };
+
+  // Migrate database (for debugging/testing)
+  const handleMigrateDatabase = async () => {
+    try {
+      console.log('🚀 Running database migration...');
+      const result = await weeklyTasksApi.migrateDatabase();
+      console.log('✅ Migration result:', result);
+      alert('✅ Database migration completed successfully');
+    } catch (error) {
+      console.error('❌ Failed to migrate database:', error);
+      alert('❌ Failed to migrate database. Check console for details.');
+    }
+  };
+
+  // Manually populate recurring tasks
+  const handlePopulateRecurringTasks = async () => {
+    if (isPopulating) return;
+    
+    setIsPopulating(true);
+    const weekDays = getWeekDays();
+    const startDate = formatDate(weekDays[0]);
+    const endDate = formatDate(weekDays[weekDays.length - 1]);
+    
+    try {
+      console.log('🔄 Manually populating recurring tasks');
+      const populateResult = await recurringTasksApi.populateRecurringTasks({
+        start_date: startDate,
+        end_date: endDate
+      });
+      
+      console.log('📊 Populate result:', populateResult);
+      
+      if (populateResult.total_populated > 0 && onTasksPopulated) {
+        await onTasksPopulated();
+      }
+    } catch (error) {
+      console.error('❌ Failed to populate recurring tasks:', error);
+      alert('❌ Failed to populate recurring tasks. Check console for details.');
+    } finally {
+      setIsPopulating(false);
+    }
+  };
+
   const weekDays = getWeekDays();
   const today = new Date();
 
 
   return (
     <div className="p-8">
-      <WeekNavigation
-        currentWeekStart={currentWeekStart}
-        onWeekChange={onWeekChange}
-      />
+      <div className="flex justify-between items-center mb-4">
+        <WeekNavigation
+          currentWeekStart={currentWeekStart}
+          onWeekChange={onWeekChange}
+        />
+        
+        {/* Control Buttons */}
+        <div className="flex gap-2 items-center">
+          {isPopulating && (
+            <span className="text-xs text-blue-600 font-medium">
+              🔄 Populating tasks...
+            </span>
+          )}
+          <button
+            onClick={handlePopulateRecurringTasks}
+            disabled={isPopulating}
+            className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400"
+            title="Populate recurring tasks for this week"
+          >
+            🔄 Populate
+          </button>
+          <button
+            onClick={handleMigrateDatabase}
+            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="Run database migration (for debugging/testing)"
+          >
+            🔧 Migrate DB
+          </button>
+          <button
+            onClick={handleClearAllTasks}
+            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+            title="Clear all tasks (for debugging/testing)"
+          >
+            🗑️ Clear All
+          </button>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
         {weekDays.map((date) => {
@@ -324,6 +434,7 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
           </div>
         </div>
       </div>
+      <RecurringTasks/>
     </div>
   );
 };

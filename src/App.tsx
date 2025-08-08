@@ -153,6 +153,10 @@ function AppContent() {
       return newDate;
     });
     // Reload weekly tasks for new week
+    await refreshWeeklyTasks();
+  };
+
+  const refreshWeeklyTasks = async () => {
     try {
       const weeklyTasksData = await weeklyTasksApi.getWeeklyTasks();
       setWeeklyTasks(weeklyTasksData);
@@ -288,9 +292,11 @@ function AppContent() {
                 onUpdateWeeklyTask={updateWeeklyTask}
                 currentWeekStart={currentWeekStart}
                 onWeekChange={handleWeekChange}
+                onTasksPopulated={refreshWeeklyTasks}
               />
             </div>
           )}
+          
           
           {/* Settings Tab Content */}
           {activeTab === 'settings' && <Settings />}

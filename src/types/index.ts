@@ -44,6 +44,7 @@ export interface WeeklyTask {
   from_time?: string; // HH:MM format
   to_time?: string;   // HH:MM format
   date: string;       // YYYY-MM-DD format
+  priority?: string;  // 'low', 'medium', 'high'
   lunch_id?: number;  // References LunchIdea.id
   breakfast_id?: number;  // References BreakfastIdea.id
   created_at: string;
@@ -65,6 +66,60 @@ export interface WeeklyTaskUpdate {
   to_time?: string;
   lunch_id?: number;
   breakfast_id?: number;
+}
+
+// Recurring Tasks Types
+export type Priority = 'low' | 'medium' | 'high';
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+export interface RecurringTask {
+  id: number;
+  text: string;
+  from_time?: string; // HH:MM format
+  to_time?: string;   // HH:MM format
+  priority: Priority;
+  category?: string;
+  weekdays: Weekday[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecurringTaskCreate {
+  text: string;
+  from_time?: string;
+  to_time?: string;
+  priority?: Priority;
+  category?: string;
+  weekdays: Weekday[];
+}
+
+export interface RecurringTaskUpdate {
+  text?: string;
+  from_time?: string;
+  to_time?: string;
+  priority?: Priority;
+  category?: string;
+  weekdays?: Weekday[];
+  is_active?: boolean;
+}
+
+
+export interface PopulateRecurringTasksRequest {
+  start_date: string; // YYYY-MM-DD format
+  end_date: string;   // YYYY-MM-DD format
+}
+
+export interface PopulatedTaskResult {
+  recurring_task_id: number;
+  weekly_task: WeeklyTask;
+  date: string;
+}
+
+export interface PopulateRecurringTasksResponse {
+  message: string;
+  total_populated: number;
+  populated_tasks: PopulatedTaskResult[];
 }
 
 // Meal Types (replaces LunchIdea and BreakfastIdea)
@@ -198,7 +253,7 @@ export interface TickTickSyncResult {
 }
 
 // UI Types
-export type TabType = 'pomodoro' | 'weekly' | 'settings';
+export type TabType = 'pomodoro' | 'weekly' | 'recurring' | 'settings';
 
 export interface NotificationData {
   id: string;
