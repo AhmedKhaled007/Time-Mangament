@@ -81,8 +81,8 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
     loadWeeklyMeals();
   }, [currentWeekStart]);
 
-  const getWeekDays = () => {
-    const days = [];
+  const getWeekDays = (): Date[] => {
+    const days: Date[] = [];
     for (let i = 0; i < 7; i++) {
       const date = new Date(currentWeekStart);
       date.setDate(date.getDate() + i);
@@ -382,7 +382,7 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
               onChange={(e) => setNewMealIdea(e.target.value)}
               placeholder="Add a new meal idea..."
               className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] touch-manipulation"
-              onKeyPress={(e) => e.key === 'Enter' && handleAddMealIdea()}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddMealIdea()}
             />
             <button
               onClick={handleAddMealIdea}

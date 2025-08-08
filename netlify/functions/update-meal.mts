@@ -1,4 +1,4 @@
-import type { Context } from '@netlify/functions';
+import type { Config, Context } from '@netlify/functions';
 import { createDbClient, handleDbError, createJsonResponse } from './lib/db';
 import { withAuth, type AuthContext } from './lib/auth';
 
@@ -70,6 +70,6 @@ const handleMealIdea = async (request: Request, auth: AuthContext, context: Cont
 
 export default withAuth(handleMealIdea);
 
-export const config = {
+export const config: Config = {
   path: "/meal-ideas/:id"
 };

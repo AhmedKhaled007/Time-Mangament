@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { WeeklyTask, LunchIdea, BreakfastIdea } from '../types';
+import type { WeeklyTask, MealIdea } from '../types';
 import TaskModal from './TaskModal';
 
 interface DayCardProps {
@@ -11,10 +11,10 @@ interface DayCardProps {
   onToggleTask: (taskId: number) => Promise<void>;
   onDeleteTask: (taskId: number) => Promise<void>;
   onEditTask: (taskId: number, task: Partial<WeeklyTask>) => Promise<void>;
-  lunchIdeas: LunchIdea[];
+  lunchIdeas: MealIdea[];
   selectedLunchId?: number;
   onLunchChange: (lunchId?: number) => void;
-  breakfastIdeas: BreakfastIdea[];
+  breakfastIdeas: MealIdea[];
   selectedBreakfastId?: number;
   onBreakfastChange: (breakfastId?: number) => void;
 }

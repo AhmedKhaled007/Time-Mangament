@@ -59,3 +59,8 @@ const handleWeeklyTasks = async (request: Request, auth: AuthContext, context: C
 };
 
 export default withAuth(handleWeeklyTasks);
+
+
+export const config = {
+  path: "/weekly-tasks"
+};
