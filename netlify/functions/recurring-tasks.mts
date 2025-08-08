@@ -62,3 +62,7 @@ const handleRecurringTasks = async (request: Request, auth: AuthContext, context
 };
 
 export default withAuth(handleRecurringTasks);
+
+export const config = {
+  path: "/functions/recurring-tasks"
+};

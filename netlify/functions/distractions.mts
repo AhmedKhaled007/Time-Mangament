@@ -47,3 +47,7 @@ const handleDistractions = async (request: Request, auth: AuthContext, context: 
 };
 
 export default withAuth(handleDistractions);
+
+export const config = {
+  path: "/functions/distractions"
+};

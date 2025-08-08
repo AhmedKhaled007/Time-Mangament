@@ -114,3 +114,7 @@ const handlePopulateRecurringTasks = async (request: Request, auth: AuthContext,
 };
 
 export default withAuth(handlePopulateRecurringTasks);
+
+export const config = {
+  path: "/functions/populate-recurring-tasks"
+};

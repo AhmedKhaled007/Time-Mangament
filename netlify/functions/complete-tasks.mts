@@ -42,5 +42,5 @@ export default withAuth(handleToggleTask);
 
 
 export const config = {
-  path: "/weekly-tasks/:id/toggle"
+  path: "/functions/weekly-tasks/:id/toggle"
 };

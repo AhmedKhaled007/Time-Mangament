@@ -130,12 +130,7 @@ const handleRecurringTask = async (request: Request, auth: AuthContext, context:
     
     // DELETE /api/recurring-tasks/:id - Delete recurring task
     if (method === 'DELETE') {
-      // First, delete all instances of this recurring task
-      await sql`
-        DELETE FROM recurring_task_instances 
-        WHERE recurring_task_id = ${taskId} AND user_id = ${auth.userId}
-      `;
-      
+
       // Then delete the recurring task itself
       const result = await sql`
         DELETE FROM recurring_tasks 
@@ -160,5 +155,5 @@ const handleRecurringTask = async (request: Request, auth: AuthContext, context:
 export default withAuth(handleRecurringTask);
 
 export const config = {
-  path: "/recurring-tasks/:id"
+  path: "/functions/recurring-tasks/:id"
 };

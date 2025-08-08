@@ -178,3 +178,7 @@ export default async (request: Request, context: Context) => {
     return handleDbError(error);
   }
 };
+
+export const config = {
+  path: "/functions/auth/*"
+};

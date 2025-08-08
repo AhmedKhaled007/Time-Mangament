@@ -33,3 +33,7 @@ const handleClearAllTasks = async (request: Request, auth: AuthContext, context:
 };
 
 export default withAuth(handleClearAllTasks);
+
+export const config = {
+  path: "/functions/clear-all-tasks"
+};

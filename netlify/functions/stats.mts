@@ -46,3 +46,7 @@ const handleStats = async (request: Request, auth: AuthContext, context: Context
 };
 
 export default withAuth(handleStats);
+
+export const config = {
+  path: "/functions/stats"
+};

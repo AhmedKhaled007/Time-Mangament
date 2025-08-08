@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      const response = await fetch('/.netlify/functions/auth/verify', {
+      const response = await fetch('/functions/auth/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthState(prev => ({ ...prev, isLoading: true, error: undefined }));
 
     try {
-      const response = await fetch('/.netlify/functions/auth/google', {
+      const response = await fetch('/functions/auth/google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       // Call logout endpoint (mainly for logging purposes)
-      await fetch('/.netlify/functions/auth/logout', {
+      await fetch('/functions/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

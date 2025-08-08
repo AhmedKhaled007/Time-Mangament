@@ -163,3 +163,7 @@ const handleDailyMeals = async (request: Request, auth: AuthContext, context: Co
 };
 
 export default withAuth(handleDailyMeals);
+
+export const config = {
+  path: "/functions/daily-meals"
+};

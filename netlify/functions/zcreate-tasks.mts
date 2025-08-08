@@ -62,5 +62,5 @@ export default withAuth(handleWeeklyTasks);
 
 
 export const config = {
-  path: "/weekly-tasks"
+  path: "/functions/weekly-tasks"
 };

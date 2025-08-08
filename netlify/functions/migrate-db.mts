@@ -35,3 +35,7 @@ const handleMigrateDb = async (request: Request, auth: AuthContext, context: Con
 };
 
 export default withAuth(handleMigrateDb);
+
+export const config = {
+  path: "/functions/migrate-db"
+};

@@ -31,11 +31,11 @@ const getApiBaseUrl = () => {
   // Check if we're in production (Netlify deployment)
   if (import.meta.env?.PROD) {
     // In production, use Netlify functions
-    return '/.netlify/functions';
+    return '/functions';
   }
   
   // For local development with Netlify dev
-  return '/.netlify/functions';
+  return '/functions';
 };
 
 const API_BASE_URL = getApiBaseUrl();

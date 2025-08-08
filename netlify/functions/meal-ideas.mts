@@ -62,3 +62,7 @@ const handleMealIdeas = async (request: Request, auth: AuthContext, context: Con
 };
 
 export default withAuth(handleMealIdeas);
+
+export const config = {
+  path: "/functions/meal-ideas"
+};

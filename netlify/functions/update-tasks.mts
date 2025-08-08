@@ -64,5 +64,5 @@ const handleWeeklyTaskById = async (request: Request, auth: AuthContext, context
 export default withAuth(handleWeeklyTaskById);
 
 export const config = {
-  path: "/weekly-tasks/:id"
+  path: "/functions/weekly-tasks/:id"
 };

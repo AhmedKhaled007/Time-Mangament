@@ -2,19 +2,19 @@
 	"siteId": "cd621b29-4ee6-45d9-b0ce-905209ad0e06",
 	"geolocation": {
 		"data": {
-			"city": "Cairo",
+			"city": "Damietta",
 			"country": {
 				"code": "EG",
 				"name": "Egypt"
 			},
 			"subdivision": {
-				"code": "C",
-				"name": "Cairo Governorate"
+				"code": "DT",
+				"name": "Damietta Governorate"
 			},
 			"timezone": "Africa/Cairo",
-			"latitude": 30.0507,
-			"longitude": 31.2489
+			"latitude": 31.4166,
+			"longitude": 31.8105
 		},
-		"timestamp": 1754573980713
+		"timestamp": 1754661021927
 	}
 }
