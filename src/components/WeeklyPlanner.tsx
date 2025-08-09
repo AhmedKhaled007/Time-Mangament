@@ -480,16 +480,16 @@ const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
                       {typeIdeas.length})
                     </h4>
 
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                       {typeIdeas.map((idea) => (
                         <div
                           key={idea.id}
-                          className="flex items-center justify-between bg-white p-2 rounded border"
+                          className="flex items-center gap-1 bg-white px-3 py-1 rounded border text-sm"
                         >
-                          <span className="text-sm">{idea.name}</span>
+                          <span>{idea.name}</span>
                           <button
                             onClick={() => handleDeleteMealIdea(idea.id)}
-                            className="text-red-500 hover:text-red-700 ml-2"
+                            className="text-red-500 hover:text-red-700 text-lg leading-none"
                             title={`Delete ${mealType} idea`}
                           >
                             ×
