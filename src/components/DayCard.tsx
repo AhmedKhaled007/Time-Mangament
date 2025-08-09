@@ -2,6 +2,18 @@ import React, { useState } from 'react';
 import type { WeeklyTask, MealIdea } from '../types';
 import TaskModal from './TaskModal';
 
+// Helper function to format time from HH:MM to HH:MM AM/PM
+const formatTime12Hour = (time24: string | undefined): string => {
+  if (!time24) return '--:--';
+  
+  const [hours, minutes] = time24.split(':');
+  const hour24 = parseInt(hours, 10);
+  const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+  const amPm = hour24 >= 12 ? 'PM' : 'AM';
+  
+  return `${hour12}:${minutes} ${amPm}`;
+};
+
 interface DayCardProps {
   date: Date;
   dayName: string;
@@ -162,7 +174,7 @@ const DayCard: React.FC<DayCardProps> = ({
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                              ⏰ {task.from_time || '--:--'} - {task.to_time || '--:--'}
+                              ⏰ {formatTime12Hour(task.from_time)}{task.to_time ? ` - ${formatTime12Hour(task.to_time)}` : ''}
                             </span>
                           </div>
                           <div className="font-medium">{task.text}</div>
