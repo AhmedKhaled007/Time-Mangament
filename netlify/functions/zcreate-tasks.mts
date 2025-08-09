@@ -19,7 +19,7 @@ const handleWeeklyTasks = async (request: Request, auth: AuthContext, context: C
       
       if (date) {
         result = await sql`
-          SELECT id, text, date, from_time, to_time, completed, priority, 
+          SELECT id, text, date::text as date, from_time, to_time, completed, priority, 
                  ticktick_id, project_id, created_at, updated_at
           FROM weekly_tasks
           WHERE user_id = ${auth.userId} AND date = ${date}
@@ -27,7 +27,7 @@ const handleWeeklyTasks = async (request: Request, auth: AuthContext, context: C
         `;
       } else {
         result = await sql`
-          SELECT id, text, date, from_time, to_time, completed, priority, 
+          SELECT id, text, date::text as date, from_time, to_time, completed, priority, 
                  ticktick_id, project_id, created_at, updated_at
           FROM weekly_tasks
           WHERE user_id = ${auth.userId}
@@ -45,7 +45,7 @@ const handleWeeklyTasks = async (request: Request, auth: AuthContext, context: C
       const result = await sql`
         INSERT INTO weekly_tasks (user_id, text, date, from_time, to_time, priority, ticktick_id, project_id)
         VALUES (${auth.userId}, ${text}, ${date}, ${from_time}, ${to_time}, ${priority}, ${ticktick_id}, ${project_id})
-        RETURNING id, text, date, from_time, to_time, completed, priority, 
+        RETURNING id, text, date::text as date, from_time, to_time, completed, priority, 
                   ticktick_id, project_id, created_at, updated_at
       `;
       return createJsonResponse(result[0], 201);

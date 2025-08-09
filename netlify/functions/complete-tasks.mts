@@ -20,7 +20,7 @@ const handleToggleTask = async (request: Request, auth: AuthContext, context: Co
         SET completed = NOT completed,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ${taskId} AND user_id = ${auth.userId}
-        RETURNING id, text, date, from_time, to_time, completed, priority, 
+        RETURNING id, text, date::text as date, from_time, to_time, completed, priority, 
                   ticktick_id, project_id, created_at, updated_at
       `;
       
