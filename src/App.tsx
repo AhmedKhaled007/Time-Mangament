@@ -30,15 +30,29 @@ function AppContent() {
   // Keep some local storage for offline features
   const [focusSessions, setFocusSessions] = useLocalStorage<number>('devTimeMaster_focusSessions', 0);
   
+  // Week start day preference (default Monday = '1')
+  const [weekStartDay, setWeekStartDay] = useLocalStorage<string>('devTimeMaster_weekStartDay', '1');
+  
   // Week navigation
-  const getWeekStart = (date: Date) => {
+  const getWeekStart = (date: Date, startDay: string = weekStartDay) => {
+    if (startDay === 'today') {
+      // For "today" mode, return a copy of the input date to preserve timezone behavior
+      return new Date(date);
+    }
+    
     const d = new Date(date);
     const day = d.getDay();
-    const diff = (day + 2) % 7;
+    const targetDay = parseInt(startDay);
+    const diff = (day - targetDay + 7) % 7;
     return new Date(d.setDate(d.getDate() - diff));
   };
   
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getWeekStart(new Date()));
+
+  // Update current week when week start day preference changes
+  useEffect(() => {
+    setCurrentWeekStart(getWeekStart(new Date()));
+  }, [weekStartDay]);
 
   // Load data from backend only when authenticated
   useEffect(() => {
@@ -154,6 +168,11 @@ function AppContent() {
     });
     // Reload weekly tasks for new week
     await refreshWeeklyTasks();
+  };
+  
+  // Handle week start day preference change
+  const handleWeekStartDayChange = (day: string) => {
+    setWeekStartDay(day);
   };
 
   const refreshWeeklyTasks = async () => {
@@ -297,7 +316,12 @@ function AppContent() {
           
           
           {/* Settings Tab Content */}
-          {activeTab === 'settings' && <Settings />}
+          {activeTab === 'settings' && (
+            <Settings
+              weekStartDay={weekStartDay}
+              onWeekStartDayChange={handleWeekStartDayChange}
+            />
+          )}
         </div>
         
         {/* Floating Timer */}
