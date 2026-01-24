@@ -4,7 +4,7 @@ A full-stack time management application built with **FastAPI** (Backend) and **
 
 ## Features
 - **Backend**: High-performance API built with FastAPI.
-- **Frontend**: Modern UI built with React, Vite, and Tailwind CSS.
+- **Frontend**: Modern UI built with React, Vite, and Tailwind CSS. 
 - **Containerization**: Fully Dockerized for easy deployment.
 
 ## Getting Started
